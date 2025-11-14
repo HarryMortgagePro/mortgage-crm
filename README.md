@@ -24,27 +24,34 @@ A full-featured mortgage and loan CRM application built for mortgage agents to t
 - Overdue tasks widget
 
 ### Clients Management
+- Full CRUD operations (Create, Read, Update, Delete)
 - Complete client information tracking
-- Search and filter capabilities
+- Search and filter capabilities (by name, email, phone, tags)
 - Client detail pages with application history
-- Notes management
+- Edit notes functionality
+- Tag management (Hot Lead, Cold Lead, Active, Closed, etc.)
 
 ### Applications Tracking
 - Comprehensive application details (property info, financials, dates)
-- Table view with filters (status, lender, type, closing date)
+- **Dual View**: Toggle between Table view and Kanban board
+- **Drag-and-Drop Kanban**: Move applications between status columns
+- Full CRUD operations (Create, Read, Update, Delete)
 - Application detail pages with tasks and documents
 - Support for multiple loan types (Mortgage, HELOC, Personal, etc.)
 
 ### Tasks Management
+- Full CRUD operations (Create, Read, Update, Delete)
 - Task tracking with due dates, priorities, and categories
 - Link tasks to clients and applications
-- Filter by status, due date, and priority
+- Filter by status, category, and priority
 - Overdue task alerts
 
 ### Document Tracking
+- Full CRUD operations (Create, Read, Update, Delete)
 - Track document status per application
-- Multiple document types (T1, NOA, T4, Job Letter, etc.)
-- Document status tracking (Requested, Received, Expired, Not Required)
+- Multiple document types (Paystub, Tax Return, Bank Statement, etc.)
+- Document status tracking (Requested, Received, Verified, Missing)
+- Add notes to each document
 
 ### Settings
 - View all configuration constants
@@ -151,9 +158,11 @@ npx prisma migrate dev --name your_migration_name
 │   ├── layout.tsx            # Root layout
 │   └── globals.css           # Global styles
 ├── components/
-│   ├── AuthGuard.tsx         # Authentication guard component
+│   ├── AuthCheck.tsx         # Authentication guard component
 │   ├── Sidebar.tsx           # Navigation sidebar
-│   └── DashboardLayout.tsx   # Dashboard layout wrapper
+│   ├── DashboardLayout.tsx   # Dashboard layout wrapper
+│   ├── ClientModal.tsx       # Client create/edit modal
+│   └── TaskModal.tsx         # Task create/edit modal
 ├── lib/
 │   ├── prisma.ts             # Prisma client instance
 │   ├── session.ts            # Session configuration
@@ -178,25 +187,34 @@ Start the production server:
 npm start
 \`\`\`
 
-## Features Roadmap
+## Features Checklist
 
-Current version includes:
-- ✅ Authentication system
-- ✅ Dashboard with key metrics
-- ✅ Client management
-- ✅ Application tracking
-- ✅ Task management
-- ✅ Document tracking
-- ✅ Settings page
+✅ **Completed Features:**
+- Authentication system with password login
+- Dashboard with application statistics and widgets
+- Client management with full CRUD operations
+- Client search and filtering by tags
+- Application tracking with full CRUD operations
+- **Drag-and-drop Kanban board** for applications
+- Toggle between Table and Kanban views
+- Task management with full CRUD operations
+- Task filtering by status, category, and priority
+- Document tracking with full CRUD operations
+- Application detail pages with document management
+- Client detail pages with editable notes
+- Settings page with configuration constants
+- Responsive sidebar navigation with mobile menu
+- SQLite database with Prisma ORM
+- Seed script with comprehensive sample data
 
-Potential future enhancements:
-- Kanban drag-and-drop board for applications
-- Advanced filtering and search
-- Email notifications
-- File upload for documents
+🚀 **Potential Future Enhancements:**
+- Email notifications for due dates
+- File upload for documents (currently status tracking only)
 - Reports and analytics
-- Calendar view
+- Calendar view for tasks and closings
 - Data export (CSV/Excel)
+- Multi-user support with roles
+- Advanced search across all entities
 
 ## Support
 
