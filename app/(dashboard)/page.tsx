@@ -1,62 +1,50 @@
-import { prisma } from '@/lib/prisma';
-import { startOfMonth, addDays } from 'date-fns';
+'use client';
 
-export const dynamic = 'force-dynamic';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
-async function getDashboardData() {
-  const now = new Date();
-  const startOfCurrentMonth = startOfMonth(now);
-  const twoWeeksFromNow = addDays(now, 14);
-
-  const [leads, submitted, conditionalApproval, funded, fundedThisMonth, upcomingClosings, overdueTasks] = await Promise.all([
-    prisma.application.count({ where: { status: 'Lead' } }),
-    prisma.application.count({ where: { status: 'Submitted' } }),
-    prisma.application.count({ where: { status: 'Conditional Approval' } }),
-    prisma.application.count({ where: { status: 'Funded' } }),
-    prisma.application.aggregate({
-      _sum: { mortgageAmount: true },
-      where: {
-        status: 'Funded',
-        fundedDate: { gte: startOfCurrentMonth },
-      },
-    }),
-    prisma.application.findMany({
-      where: {
-        closingDate: {
-          gte: now,
-          lte: twoWeeksFromNow,
-        },
-      },
-      include: { client: true },
-      orderBy: { closingDate: 'asc' },
-      take: 5,
-    }),
-    prisma.task.findMany({
-      where: {
-        status: { not: 'Done' },
-        dueDate: { lte: now },
-      },
-      include: { client: true, application: true },
-      orderBy: { dueDate: 'asc' },
-      take: 5,
-    }),
-  ]);
-
-  return {
-    stats: {
-      leads,
-      submitted,
-      conditionalApproval,
-      funded,
-      fundedVolume: fundedThisMonth._sum.mortgageAmount || 0,
-    },
-    upcomingClosings,
-    overdueTasks,
+type DashboardData = {
+  stats: {
+    leads: number;
+    submitted: number;
+    conditionalApproval: number;
+    funded: number;
+    fundedVolume: number;
   };
-}
+  upcomingClosings: Array<{
+    id: number;
+    client: { firstName: string; lastName: string };
+    lenderName: string | null;
+    mortgageAmount: number | null;
+    closingDate: Date | null;
+    status: string;
+  }>;
+  overdueTasks: Array<{
+    id: number;
+    title: string;
+    dueDate: Date | null;
+    priority: string | null;
+    client: { id: number; firstName: string; lastName: string } | null;
+  }>;
+};
 
-export default async function DashboardPage() {
-  const data = await getDashboardData();
+export default function DashboardPage() {
+  const [data, setData] = useState<DashboardData | null>(null);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      const res = await fetch('/api/dashboard', { credentials: 'include' });
+      if (res.ok) {
+        const dashboardData = await res.json();
+        setData(dashboardData);
+      }
+    };
+    fetchDashboard();
+  }, []);
+
+  if (!data) {
+    return <div className="p-8">Loading...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -116,7 +104,7 @@ export default async function DashboardPage() {
                     ${app.mortgageAmount?.toLocaleString() || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {app.closingDate?.toLocaleDateString() || '-'}
+                    {app.closingDate ? new Date(app.closingDate).toLocaleDateString() : '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
@@ -149,10 +137,14 @@ export default async function DashboardPage() {
                 <tr key={task.id}>
                   <td className="px-6 py-4 text-sm text-gray-900">{task.title}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {task.client ? `${task.client.firstName} ${task.client.lastName}` : '-'}
+                    {task.client ? (
+                      <Link href={`/clients/${task.client.id}`} className="text-blue-600 hover:text-blue-800">
+                        {task.client.firstName} {task.client.lastName}
+                      </Link>
+                    ) : '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {task.dueDate?.toLocaleDateString() || '-'}
+                    {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${

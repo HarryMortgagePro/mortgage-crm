@@ -1,21 +1,106 @@
-import { prisma } from '@/lib/prisma';
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { DOCUMENT_TYPES, DOCUMENT_STATUSES } from '@/lib/constants';
 
-export const dynamic = 'force-dynamic';
+type Application = {
+  id: number;
+  client: { id: number; firstName: string; lastName: string };
+  applicationType: string;
+  purpose: string;
+  status: string;
+  propertyAddress: string | null;
+  propertyCity: string | null;
+  propertyProvince: string | null;
+  propertyType: string | null;
+  purchasePrice: number | null;
+  mortgageAmount: number | null;
+  downPaymentAmount: number | null;
+  interestRate: number | null;
+  rateType: string | null;
+  termYears: number | null;
+  amortizationYears: number | null;
+  lenderName: string | null;
+  applicationDate: Date | null;
+  conditionsDueDate: Date | null;
+  closingDate: Date | null;
+  fundedDate: Date | null;
+  notes: string | null;
+  tasks: Array<{
+    id: number;
+    title: string;
+    dueDate: Date | null;
+    status: string;
+    priority: string | null;
+  }>;
+  documents: Array<{
+    id: number;
+    docType: string;
+    status: string;
+    notes: string | null;
+  }>;
+};
 
-export default async function ApplicationDetailPage({ params }: { params: { id: string } }) {
-  const application = await prisma.application.findUnique({
-    where: { id: parseInt(params.id) },
-    include: {
-      client: true,
-      tasks: true,
-      documents: true,
-    },
-  });
+export default function ApplicationDetailPage({ params }: { params: { id: string } }) {
+  const router = useRouter();
+  const [application, setApplication] = useState<Application | null>(null);
+  const [isAddingDoc, setIsAddingDoc] = useState(false);
+  const [newDoc, setNewDoc] = useState({ docType: '', status: 'Requested', notes: '' });
+
+  const fetchApplication = async () => {
+    const res = await fetch(`/api/applications/${params.id}`, { credentials: 'include' });
+    if (res.ok) {
+      const data = await res.json();
+      setApplication(data);
+    } else {
+      router.push('/applications');
+    }
+  };
+
+  useEffect(() => {
+    fetchApplication();
+  }, [params.id]);
+
+  const handleAddDocument = async () => {
+    if (!newDoc.docType) {
+      alert('Please select a document type');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/documents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...newDoc,
+          applicationId: parseInt(params.id),
+        }),
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        setIsAddingDoc(false);
+        setNewDoc({ docType: '', status: 'Requested', notes: '' });
+        fetchApplication();
+      } else {
+        alert('Failed to add document');
+      }
+    } catch (error) {
+      alert('Error adding document');
+    }
+  };
+
+  const handleDeleteDocument = async (docId: number) => {
+    if (!confirm('Are you sure you want to delete this document record?')) return;
+    
+    await fetch(`/api/documents/${docId}`, { method: 'DELETE', credentials: 'include' });
+    fetchApplication();
+  };
 
   if (!application) {
-    notFound();
+    return <div className="p-8">Loading...</div>;
   }
 
   return (
@@ -129,25 +214,25 @@ export default async function ApplicationDetailPage({ params }: { params: { id: 
           <div>
             <dt className="text-sm font-medium text-gray-500">Application Date</dt>
             <dd className="text-sm text-gray-900">
-              {application.applicationDate?.toLocaleDateString() || '-'}
+              {application.applicationDate ? new Date(application.applicationDate).toLocaleDateString() : '-'}
             </dd>
           </div>
           <div>
             <dt className="text-sm font-medium text-gray-500">Conditions Due</dt>
             <dd className="text-sm text-gray-900">
-              {application.conditionsDueDate?.toLocaleDateString() || '-'}
+              {application.conditionsDueDate ? new Date(application.conditionsDueDate).toLocaleDateString() : '-'}
             </dd>
           </div>
           <div>
             <dt className="text-sm font-medium text-gray-500">Closing Date</dt>
             <dd className="text-sm text-gray-900">
-              {application.closingDate?.toLocaleDateString() || '-'}
+              {application.closingDate ? new Date(application.closingDate).toLocaleDateString() : '-'}
             </dd>
           </div>
           <div>
             <dt className="text-sm font-medium text-gray-500">Funded Date</dt>
             <dd className="text-sm text-gray-900">
-              {application.fundedDate?.toLocaleDateString() || '-'}
+              {application.fundedDate ? new Date(application.fundedDate).toLocaleDateString() : '-'}
             </dd>
           </div>
         </dl>
@@ -170,7 +255,7 @@ export default async function ApplicationDetailPage({ params }: { params: { id: 
                   </span>
                 </div>
                 <p className="text-sm text-gray-600 mt-1">
-                  Due: {task.dueDate?.toLocaleDateString() || '-'} | Status: {task.status}
+                  Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '-'} | Status: {task.status}
                 </p>
               </li>
             ))}
@@ -181,16 +266,92 @@ export default async function ApplicationDetailPage({ params }: { params: { id: 
       </div>
 
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Documents</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Documents</h2>
+          <button
+            onClick={() => setIsAddingDoc(true)}
+            className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+          >
+            + Add Document
+          </button>
+        </div>
+
+        {isAddingDoc && (
+          <div className="mb-4 p-4 border border-gray-300 rounded-md bg-gray-50">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Document Type</label>
+                <select
+                  value={newDoc.docType}
+                  onChange={(e) => setNewDoc({ ...newDoc, docType: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                >
+                  <option value="">Select type...</option>
+                  {DOCUMENT_TYPES.map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select
+                  value={newDoc.status}
+                  onChange={(e) => setNewDoc({ ...newDoc, status: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                >
+                  {DOCUMENT_STATUSES.map((status) => (
+                    <option key={status} value={status}>{status}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <input
+                  type="text"
+                  value={newDoc.notes}
+                  onChange={(e) => setNewDoc({ ...newDoc, notes: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                />
+              </div>
+            </div>
+            <div className="flex space-x-2 mt-3">
+              <button
+                onClick={handleAddDocument}
+                disabled={!newDoc.docType}
+                className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-50"
+              >
+                Add
+              </button>
+              <button
+                onClick={() => {
+                  setIsAddingDoc(false);
+                  setNewDoc({ docType: '', status: 'Requested', notes: '' });
+                }}
+                className="px-3 py-1 border border-gray-300 text-sm rounded-md hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
         {application.documents.length > 0 ? (
           <ul className="divide-y divide-gray-200">
             {application.documents.map((doc) => (
               <li key={doc.id} className="py-3">
                 <div className="flex justify-between">
                   <span className="font-medium">{doc.docType}</span>
-                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
-                    {doc.status}
-                  </span>
+                  <div className="flex items-center space-x-2">
+                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+                      {doc.status}
+                    </span>
+                    <button
+                      onClick={() => handleDeleteDocument(doc.id)}
+                      className="text-red-600 hover:text-red-800 text-sm"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
                 {doc.notes && <p className="text-sm text-gray-600 mt-1">{doc.notes}</p>}
               </li>
