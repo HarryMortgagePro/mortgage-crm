@@ -60,11 +60,25 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   }
 
   try {
-    await prisma.application.delete({
-      where: { id: parseInt(params.id) },
+    const appId = parseInt(params.id);
+    
+    await prisma.$transaction(async (tx) => {
+      await tx.documentRecord.deleteMany({
+        where: { applicationId: appId },
+      });
+      
+      await tx.task.deleteMany({
+        where: { applicationId: appId },
+      });
+      
+      await tx.application.delete({
+        where: { id: appId },
+      });
     });
+    
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error('Delete application error:', error);
     return NextResponse.json({ error: 'Failed to delete application' }, { status: 500 });
   }
 }

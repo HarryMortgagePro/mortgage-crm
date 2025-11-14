@@ -53,11 +53,33 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   }
 
   try {
-    await prisma.client.delete({
-      where: { id: parseInt(params.id) },
+    const clientId = parseInt(params.id);
+    
+    await prisma.$transaction(async (tx) => {
+      await tx.documentRecord.deleteMany({
+        where: {
+          application: {
+            clientId: clientId,
+          },
+        },
+      });
+      
+      await tx.task.deleteMany({
+        where: { clientId: clientId },
+      });
+      
+      await tx.application.deleteMany({
+        where: { clientId: clientId },
+      });
+      
+      await tx.client.delete({
+        where: { id: clientId },
+      });
     });
+    
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error('Delete client error:', error);
     return NextResponse.json({ error: 'Failed to delete client' }, { status: 500 });
   }
 }

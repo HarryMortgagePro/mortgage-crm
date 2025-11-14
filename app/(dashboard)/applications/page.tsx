@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { STATUSES } from '@/lib/constants';
+import ApplicationModal from '@/components/ApplicationModal';
 import {
   DndContext,
   DragEndEvent,
@@ -25,6 +26,8 @@ type Application = {
 export default function ApplicationsPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [view, setView] = useState<'table' | 'kanban'>('table');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingApplication, setEditingApplication] = useState<Application | null>(null);
   
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -71,11 +74,25 @@ export default function ApplicationsPage() {
     fetchApplications();
   };
 
+  const handleEdit = (app: Application) => {
+    setEditingApplication(app);
+    setIsModalOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">Applications</h1>
         <div className="flex space-x-3">
+          <button
+            onClick={() => {
+              setEditingApplication(null);
+              setIsModalOpen(true);
+            }}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            + New Application
+          </button>
           <div className="flex rounded-md shadow-sm">
             <button
               onClick={() => setView('table')}
@@ -100,6 +117,21 @@ export default function ApplicationsPage() {
           </div>
         </div>
       </div>
+
+      {isModalOpen && (
+        <ApplicationModal
+          application={editingApplication}
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditingApplication(null);
+          }}
+          onSave={() => {
+            setIsModalOpen(false);
+            setEditingApplication(null);
+            fetchApplications();
+          }}
+        />
+      )}
 
       {view === 'table' ? (
         <div className="bg-white rounded-lg shadow overflow-hidden">
