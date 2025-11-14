@@ -1,0 +1,515 @@
+PROMPT TO PASTE INTO REPLIT AI:
+
+You are an expert full-stack engineer.
+Build a full mortgage & loan CRM-style tracker web app for a single mortgage agent to track clients and their mortgage/loan applications.
+
+Tech Stack
+
+Use this exact stack:
+
+Framework: Next.js (latest, App Router) with TypeScript
+
+Styling: Tailwind CSS
+
+ORM: Prisma
+
+Database: SQLite (good default for Replit)
+
+Auth: Simple one-user login with a single password in .env.local (ADMIN_PASSWORD)
+
+The app must be fully working and include:
+
+Prisma schema and setup
+
+Any needed migrations / commands
+
+Seed script with sample data
+
+A README.md with clear run instructions
+
+Prisma Schema – Core Models
+
+Create these Prisma models (you can adjust field names slightly if idiomatic, but keep all fields and relations):
+
+model Client {
+  id             Int              @id @default(autoincrement())
+  firstName      String
+  lastName       String
+  email          String?
+  phone          String?
+  tags           String?          // comma-separated tags: "first-time, investor"
+  referralSource String?          // Realtor, Google, Instagram, Friend, etc.
+  notes          String?
+  applications   Application[]
+  tasks          Task[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model Application {
+  id                 Int              @id @default(autoincrement())
+  client             Client           @relation(fields: [clientId], references: [id])
+  clientId           Int
+
+  applicationType    String           // Mortgage, HELOC, Personal, Auto, Business, Private, Construction
+  purpose            String           // Purchase, Refinance, Renewal, Pre-Approval, Equity Take-Out, Bridge
+  status             String           // Lead, Pre-Qualified, Submitted, Conditional Approval, Docs Pending, Compliance Review, Final Approval, Signed, Funded, Declined, Withdrawn
+
+  propertyAddress    String?
+  propertyCity       String?
+  propertyProvince   String?
+  propertyType       String?          // Condo, Detached, Townhouse, Multi-unit, Commercial
+
+  purchasePrice      Float?
+  mortgageAmount     Float?
+  downPaymentAmount  Float?
+  interestRate       Float?
+  rateType           String?          // Fixed, Variable
+  termYears          Int?
+  amortizationYears  Int?
+
+  lenderName         String?
+  brokerFee          Float?           // just store a number (can be % or flat)
+  lenderFee          Float?
+
+  applicationDate    DateTime?
+  conditionsDueDate  DateTime?
+  closingDate        DateTime?
+  fundedDate         DateTime?
+
+  notes              String?
+
+  tasks              Task[]
+  documents          DocumentRecord[]
+
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+}
+
+model Task {
+  id             Int         @id @default(autoincrement())
+  title          String
+  description    String?
+  dueDate        DateTime?
+  status         String      // Open, In Progress, Done
+  priority       String?     // Low, Medium, High
+  category       String?     // Documents, Follow-up, Compliance, Lender, Other
+
+  client         Client?     @relation(fields: [clientId], references: [id])
+  clientId       Int?
+
+  application    Application? @relation(fields: [applicationId], references: [id])
+  applicationId  Int?
+
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model DocumentRecord {
+  id             Int         @id @default(autoincrement())
+  application    Application @relation(fields: [applicationId], references: [id])
+  applicationId  Int
+  docType        String      // T1, NOA, T4, Job Letter, Bank Statements, APS, Appraisal, etc.
+  status         String      // Requested, Received, Expired, Not Required
+  notes          String?
+
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+Seed Data
+
+Create a seed script that inserts:
+
+3–5 Clients (with realistic names, emails, phones, tags, referralSource, notes)
+
+5–10 Applications:
+
+Mix of types (Mortgage, HELOC, etc.)
+
+Mix of purposes (Purchase, Refinance, Pre-Approval, etc.)
+
+Various statuses (Lead, Submitted, Conditional Approval, Funded, Declined)
+
+5–10 Tasks linked to some clients/applications
+
+A few DocumentRecord entries per application with different statuses
+
+Authentication
+
+Implement a simple password-only login:
+
+In .env.local, expect:
+
+ADMIN_PASSWORD="replace-with-strong-password"
+
+
+Create a /login page:
+
+Single password field.
+
+On success, set a secure cookie/session so user stays logged in.
+
+All main pages (/, /clients, /applications, /tasks, /settings, detail pages) must be protected:
+
+If not authenticated → redirect to /login.
+
+No registration, no multi-user system needed.
+
+Layout & Navigation
+
+Create a clean, responsive layout:
+
+Sidebar navigation (on desktop) with links to:
+
+Dashboard
+
+Clients
+
+Applications
+
+Tasks
+
+Settings
+
+On mobile, use a top bar with a menu button to open the nav.
+
+Use Tailwind for spacing, typography, cards, tables, etc. Design should be simple but professional.
+
+Pages & Features
+1. Dashboard (/)
+
+Show an overview for the mortgage business:
+
+Stats cards:
+
+Count of applications by key statuses:
+
+Leads
+
+Submitted
+
+Conditional Approval
+
+Funded
+
+Total funded volume this month (sum of mortgageAmount where status = "Funded" and fundedDate is in current month).
+
+Upcoming Closings:
+
+Table of applications where closingDate is within the next 14 days.
+
+Columns: Client Name, Lender, Mortgage Amount, Closing Date, Status.
+
+Tasks widget:
+
+List tasks that are overdue or due today.
+
+Clicking a task should navigate to a relevant detail (or at least show more info).
+
+2. Clients Tab (/clients)
+Clients List
+
+Table with columns:
+
+Name (firstName + lastName)
+
+Email
+
+Phone
+
+Tags
+
+Referral Source
+
+Number of applications
+
+Last updated date
+
+Search:
+
+Search by name, email, or phone.
+
+Optional filter:
+
+Filter by tag (string includes).
+
+Add / Edit Client
+
+Use a modal or side drawer.
+
+Fields:
+
+firstName (required)
+
+lastName (required)
+
+email
+
+phone
+
+tags (comma-separated string)
+
+referralSource (free text: Realtor name, Google, Instagram, Friend, etc.)
+
+notes (multi-line)
+
+Support create and update with frontend validation.
+
+Client Detail Page (/clients/[id])
+
+Sections:
+
+Client Info
+
+Show all client fields.
+
+Edit button (open the same edit form).
+
+Applications for this client
+
+Table listing all Applications with:
+
+Application Type & Purpose
+
+Lender
+
+Status
+
+Mortgage Amount
+
+Closing Date
+
+Button: “Create new application for this client” which opens an application create form pre-filled with clientId.
+
+Notes
+
+Show current notes with option to update (simple text area + save button).
+
+3. Applications Tab (/applications)
+
+Provide two views: a table view and a Kanban view.
+
+You can implement this as a toggle (buttons like “Table / Board”).
+
+Table View
+
+Filters:
+
+Status (dropdown / multi-select)
+
+Lender
+
+ApplicationType
+
+Closing date range (a basic from/to is fine)
+
+Columns:
+
+Client Name (clickable → client detail)
+
+Application Type & Purpose
+
+Lender
+
+Mortgage Amount
+
+Status
+
+Closing Date
+
+Clicking a row → Application Detail page.
+
+Kanban View
+
+Columns represent status:
+
+Lead
+
+Pre-Qualified
+
+Submitted
+
+Conditional Approval
+
+Docs Pending
+
+Compliance Review
+
+Final Approval
+
+Signed
+
+Funded
+
+Declined
+
+Withdrawn
+
+Each application is a card showing:
+
+Client name
+
+Lender
+
+Mortgage amount
+
+Closing date
+
+Enable drag-and-drop:
+
+Drag a card between columns to update its status in the database.
+
+Application Detail Page (/applications/[id])
+
+Sections:
+
+Overview
+
+Client name (linked to client detail)
+
+Application Type, Purpose, Status
+
+Lender name
+
+Property & Deal Details
+
+Property address, city, province, propertyType
+
+purchasePrice, mortgageAmount, downPaymentAmount
+
+interestRate, rateType, termYears, amortizationYears
+
+Key Dates
+
+applicationDate
+
+conditionsDueDate
+
+closingDate
+
+fundedDate
+
+Tasks for this Application
+
+List tasks where applicationId matches.
+
+Show title, due date, status, priority.
+
+Button to add a new task linked to this application (and optionally also to the client).
+
+Documents
+
+List DocumentRecords for this application:
+
+docType, status, notes
+
+Allow adding/editing/removing DocumentRecords via a small form.
+
+Notes
+
+Text area to update Application.notes.
+
+Also provide a Create Application form (for new files) accessible from /applications and from client details.
+
+4. Tasks Tab (/tasks)
+
+Show all tasks in one place.
+
+Filters:
+
+Status: Open / In Progress / Done
+
+Due: Overdue / Today / This Week / All
+
+Priority: Low / Medium / High
+
+Table columns:
+
+Title
+
+Due Date
+
+Status
+
+Priority
+
+Category
+
+Linked Client (name, if any)
+
+Linked Application (id or brief info, if any)
+
+Clicking a row can open either:
+
+A small detail panel/modal
+
+Or navigate to a dedicated task page (your choice).
+
+Create/Edit Task form:
+
+title (required)
+
+description
+
+dueDate
+
+status
+
+priority
+
+category
+
+client (dropdown of Clients)
+
+application (dropdown of Applications)
+
+5. Settings Tab (/settings)
+
+This can be simple:
+
+Display (and optionally edit) lists of common dropdown values used elsewhere:
+
+Application Types
+
+Purposes
+
+Property Types
+
+Document Types
+
+Maybe default status options
+
+For v1, these can be hard-coded config/constants. If easy, you may store them in the DB and make them editable via forms.
+
+General Implementation Requirements
+
+Use Next.js App Router structure (app/ directory).
+
+Organize code with folders like:
+
+app/ for routes and layouts
+
+components/ for UI components (tables, cards, forms, etc.)
+
+lib/ for helpers, db access functions
+
+prisma/ for schema and seed
+
+Handle loading and error states gracefully.
+
+Include a clear README.md with:
+
+How to install dependencies
+
+How to create .env.local with ADMIN_PASSWORD
+
+How to run Prisma commands:
+
+npx prisma generate
+
+npx prisma migrate dev
+
+npx prisma db seed (if using)
+
+How to run the dev server: npm run dev
