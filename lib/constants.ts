@@ -19,16 +19,11 @@ export const PURPOSES = [
 
 export const STATUSES = [
   'Lead',
-  'Pre-Qualified',
+  'App Taken/Background',
   'Submitted',
-  'Conditional Approval',
-  'Docs Pending',
-  'Compliance Review',
-  'Final Approval',
-  'Signed',
+  'Approval',
   'Funded',
   'Declined',
-  'Withdrawn',
 ];
 
 export const PROPERTY_TYPES = [
