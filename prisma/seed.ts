@@ -463,6 +463,175 @@ async function main() {
     },
   });
 
+  console.log('Creating bank accounts...');
+
+  await prisma.bankAccount.create({
+    data: {
+      clientId: client1.id,
+      bankName: 'TD Canada Trust',
+      accountNickname: 'Primary Chequing',
+      maskedAccountNumber: '****7891',
+      accountType: 'Chequing',
+      ownerName: 'John Smith',
+      mainUser: 'Self',
+      usedFor: 'Salary deposits, bill payments, daily expenses',
+      openedDate: new Date('2018-03-15'),
+      status: 'Active',
+      currency: 'CAD',
+      notes: 'Main operating account',
+    },
+  });
+
+  await prisma.bankAccount.create({
+    data: {
+      clientId: client1.id,
+      bankName: 'Scotiabank',
+      accountNickname: 'Savings Account',
+      maskedAccountNumber: '****4523',
+      accountType: 'Savings',
+      ownerName: 'John Smith',
+      mainUser: 'Self',
+      usedFor: 'Emergency fund and down payment savings',
+      openedDate: new Date('2019-06-10'),
+      status: 'Active',
+      currency: 'CAD',
+      notes: 'Building down payment funds',
+    },
+  });
+
+  await prisma.bankAccount.create({
+    data: {
+      clientId: client2.id,
+      bankName: 'RBC Royal Bank',
+      accountNickname: 'Business Account',
+      maskedAccountNumber: '****9012',
+      accountType: 'Business',
+      ownerName: 'Sarah Johnson',
+      mainUser: 'Self',
+      usedFor: 'Rental income deposits, property expenses',
+      openedDate: new Date('2017-01-20'),
+      status: 'Active',
+      currency: 'CAD',
+      notes: 'For rental property management',
+    },
+  });
+
+  await prisma.bankAccount.create({
+    data: {
+      clientId: client2.id,
+      bankName: 'TD Canada Trust',
+      accountNickname: 'Investment Account',
+      maskedAccountNumber: '****3456',
+      accountType: 'Savings',
+      ownerName: 'Sarah Johnson',
+      mainUser: 'Self',
+      usedFor: 'Investment property down payments',
+      openedDate: new Date('2019-05-12'),
+      status: 'Active',
+      currency: 'CAD',
+    },
+  });
+
+  await prisma.bankAccount.create({
+    data: {
+      clientId: client3.id,
+      bankName: 'CIBC',
+      accountNickname: 'Family Joint Account',
+      maskedAccountNumber: '****6789',
+      accountType: 'Joint',
+      ownerName: 'Michael Chen & Spouse',
+      mainUser: 'Both',
+      usedFor: 'Mortgage payments, household bills, family expenses',
+      openedDate: new Date('2015-08-05'),
+      status: 'Active',
+      currency: 'CAD',
+      notes: 'Joint account with spouse',
+    },
+  });
+
+  await prisma.bankAccount.create({
+    data: {
+      clientId: client3.id,
+      bankName: 'Tangerine',
+      accountNickname: 'High Interest Savings',
+      maskedAccountNumber: '****2345',
+      accountType: 'Savings',
+      ownerName: 'Michael Chen',
+      mainUser: 'Self',
+      usedFor: 'Tax savings, emergency fund',
+      openedDate: new Date('2020-02-18'),
+      status: 'Active',
+      currency: 'CAD',
+    },
+  });
+
+  await prisma.bankAccount.create({
+    data: {
+      clientId: client4.id,
+      bankName: 'BMO Bank of Montreal',
+      accountNickname: 'Primary Account',
+      maskedAccountNumber: '****8901',
+      accountType: 'Chequing',
+      ownerName: 'Emily Williams',
+      mainUser: 'Self',
+      usedFor: 'Salary, bills, savings',
+      openedDate: new Date('2021-09-01'),
+      status: 'Active',
+      currency: 'CAD',
+      notes: 'First bank account opened as young professional',
+    },
+  });
+
+  await prisma.bankAccount.create({
+    data: {
+      clientId: client4.id,
+      bankName: 'EQ Bank',
+      accountNickname: 'Down Payment Fund',
+      maskedAccountNumber: '****5678',
+      accountType: 'Savings',
+      ownerName: 'Emily Williams',
+      mainUser: 'Self',
+      usedFor: 'Saving for first home down payment',
+      openedDate: new Date('2022-03-15'),
+      status: 'Active',
+      currency: 'CAD',
+      notes: 'High interest savings for home purchase',
+    },
+  });
+
+  await prisma.bankAccount.create({
+    data: {
+      clientId: client5.id,
+      bankName: 'National Bank',
+      accountNickname: 'Main Chequing',
+      maskedAccountNumber: '****1234',
+      accountType: 'Chequing',
+      ownerName: 'David Brown',
+      mainUser: 'Self',
+      usedFor: 'Income, mortgage, regular expenses',
+      openedDate: new Date('2010-04-22'),
+      status: 'Active',
+      currency: 'CAD',
+    },
+  });
+
+  await prisma.bankAccount.create({
+    data: {
+      clientId: client5.id,
+      bankName: 'Scotiabank',
+      accountNickname: 'Old Account',
+      maskedAccountNumber: '****9999',
+      accountType: 'Savings',
+      ownerName: 'David Brown',
+      mainUser: 'Self',
+      usedFor: 'Previously used for savings',
+      openedDate: new Date('2005-11-30'),
+      status: 'Closed',
+      currency: 'CAD',
+      notes: 'Closed when consolidating accounts',
+    },
+  });
+
   console.log('Seed completed successfully!');
 }
 

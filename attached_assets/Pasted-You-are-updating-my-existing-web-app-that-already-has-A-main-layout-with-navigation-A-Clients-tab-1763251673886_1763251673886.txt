@@ -1,0 +1,229 @@
+You are updating my existing web app that already has:
+
+A main layout with navigation
+
+A Clients tab/page
+
+A database with a Client model (or equivalent)
+
+Now, add a full “Accounts” tab to manage bank accounts for each client.
+
+1. Data model – Bank Accounts
+
+Add a new database model for bank accounts.
+If you are using Prisma, update schema.prisma with something like:
+
+model BankAccount {
+  id                String   @id @default(cuid())
+  clientId          String
+  client            Client   @relation(fields: [clientId], references: [id])
+  bankName          String
+  accountNickname   String?
+  maskedAccountNumber String  // e.g. ****1234
+  accountType       String    // e.g. "Chequing", "Savings", "Business", etc.
+  ownerName         String    // who legally owns the account
+  mainUser          String?   // who mainly uses it (e.g. "Spouse", "Daughter", "Company A")
+  usedFor           String?   // high-level usage, e.g. "Salary deposits, bills, savings"
+  openedDate        DateTime?
+  status            String    // e.g. "Active", "Closed", "Frozen"
+  currency          String?   // e.g. "CAD"
+  notes             String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+
+Run the migration so this table is created.
+
+If the project is not using Prisma, create an equivalent BankAccount table with the same fields and a foreign key to clients.
+
+2. Navigation – add “Accounts” tab
+
+Update the main navigation to include a new item:
+
+Label: Accounts
+
+Path: /accounts
+
+Icon: any simple bank/account icon if the design system has it.
+
+Make sure the new tab looks and behaves consistently with the existing Clients tab styling.
+
+3. Accounts page layout (/accounts)
+
+Create a new page, e.g. app/accounts/page.tsx (or whatever routing system is used), that shows:
+
+3.1 Header
+
+At the top:
+
+Page title: Accounts
+
+A short subtitle: “Manage bank accounts for each client.”
+
+A primary button on the right: + Add Account
+
+3.2 Filters + Search
+
+Below the header, add a filter/search bar with:
+
+Client filter: dropdown populated from the Client table (show client name).
+
+Bank filter: text input or a select based on distinct bankName values.
+
+Status filter: select (All, Active, Closed, Frozen).
+
+Search box: searches across accountNickname, ownerName, mainUser, and maskedAccountNumber.
+
+Filters should be combinable, and the list updates reactively.
+
+3.3 Accounts table
+
+Create a responsive table listing all bank accounts.
+Columns should include:
+
+Client – show client name (clickable to open client details in a new tab or navigate to the client page).
+
+Bank / Account – show bankName on top, and accountNickname or maskedAccountNumber below in smaller text.
+
+Owner – ownerName.
+
+Main User – mainUser.
+
+Used For – usedFor text (truncate long text with tooltip on hover).
+
+Opened Date – formatted as MMM dd, yyyy (e.g. Nov 15, 2025). If empty, show —.
+
+Status – colored pill (Active = green, Closed = gray, Frozen = red or orange).
+
+Actions – “View / Edit” button and a subtle “More” menu (e.g. three dots) with Edit and Delete.
+
+The table should:
+
+Support pagination (e.g. 10–25 rows per page).
+
+Allow sorting by Client, Bank, Opened Date, and Status.
+
+Be mobile friendly (stacked layout on small screens).
+
+4. Add / Edit Account – modal form
+
+Clicking + Add Account or Edit should open a modal (or drawer) with a form.
+
+4.1 Form fields
+
+Client (required)
+
+Dropdown linked to existing Client records (searchable by name).
+
+Bank Name (required)
+
+Account Nickname (optional) – e.g. “Navneet – Salary Account”
+
+Masked Account Number (required) – e.g. ****1234 (just store the masked version, not full).
+
+Account Type (required)
+
+Dropdown: Chequing, Savings, Business, Joint, Other.
+
+Owner Name (required) – legal owner(s) of the account.
+
+Main User (optional) – who mainly uses it, like “Spouse”, “Daughter”, company name.
+
+Used For (optional, multi-line text)
+
+Example placeholder: “Salary deposits, bill payments, savings, mortgage, tax…”
+
+Opened Date (optional) – date picker.
+
+Status (required)
+
+Dropdown: Active, Closed, Frozen.
+
+Currency (optional, default to CAD).
+
+Notes (optional, multi-line).
+
+4.2 Form behavior
+
+Validate required fields.
+
+On submit:
+
+Create or update the BankAccount in the database.
+
+Close the modal.
+
+Refresh the table data without full page reload.
+
+On cancel:
+
+Close the modal without changes.
+
+5. View / details panel
+
+Clicking View / Edit in the table should either:
+
+Open the same modal pre-filled (Edit mode)
+or
+
+Open a side drawer / panel with a read-only view, plus Edit and Delete buttons.
+
+The details view should show:
+
+Client name (with link to client)
+
+All fields of the BankAccount model with clear labels
+
+createdAt and updatedAt timestamps (formatted nicely)
+
+6. Delete account
+
+When the user chooses Delete:
+
+Show a confirmation dialog:
+
+“Are you sure you want to delete this bank account? This cannot be undone.”
+
+If confirmed, delete the BankAccount and refresh the list.
+
+Make sure deletion handles foreign key constraints safely. If there are any future related tables (like salary tracking), you can either:
+
+Prevent delete if related records exist, or
+
+Use cascading delete, depending on the project conventions.
+
+7. API / server logic
+
+Add the necessary API routes or server actions to support CRUD for BankAccount:
+
+GET /api/accounts – list accounts with optional filters:
+
+clientId, bankName, status, search, page, pageSize
+
+POST /api/accounts – create a new account
+
+PUT /api/accounts/:id – update an account
+
+DELETE /api/accounts/:id – delete an account
+
+Use the existing style and patterns in the app (e.g. Next.js server actions, tRPC, or REST endpoints) so it’s consistent with the Clients tab.
+
+8. Design + UX standards
+
+Match the styling, typography, and spacing of the existing Clients tab.
+
+Use the same UI library (e.g. shadcn/ui, Tailwind) and components:
+
+Buttons
+
+Table
+
+Dialog/Modal
+
+Inputs
+
+Selects
+
+Ensure the Accounts tab is fully responsive and feels like a native part of the app.
