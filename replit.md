@@ -15,6 +15,15 @@ This is a full-stack mortgage and loan CRM (Customer Relationship Management) ap
 
 ## Recent Changes
 
+- **2024-11-16**: Accounts tab implementation
+  - Added BankAccount model to Prisma schema with comprehensive fields
+  - Created database migration for bank_accounts table
+  - Implemented full CRUD API routes for bank accounts
+  - Built Accounts page with filters, search, and pagination (25 items/page)
+  - Created BankAccountModal for add/edit operations
+  - Added 10 sample bank accounts to seed data
+  - Updated sidebar navigation with Accounts tab
+
 - **2024-11-14**: Initial project setup
   - Created Next.js application with TypeScript and Tailwind CSS
   - Set up Prisma with SQLite database
@@ -32,6 +41,7 @@ This is a full-stack mortgage and loan CRM (Customer Relationship Management) ap
 2. **Application**: Tracks mortgage/loan applications with detailed property and financial data
 3. **Task**: Manages tasks linked to clients and applications
 4. **DocumentRecord**: Tracks document status for each application
+5. **BankAccount**: Manages client bank account information (bank name, account nickname, masked account number, account type, owner name, main user, usage, opened date, status, currency, notes)
 
 ### Key Features
 
@@ -39,6 +49,7 @@ This is a full-stack mortgage and loan CRM (Customer Relationship Management) ap
 - **Clients**: Full CRUD operations with search and filtering
 - **Applications**: Table and Kanban views with drag-and-drop functionality
 - **Tasks**: Task management with priorities, categories, and due dates
+- **Accounts**: Bank account management with client/status/bank filtering, search, and pagination
 - **Documents**: Document tracking per application
 - **Settings**: View configuration constants
 
@@ -52,10 +63,11 @@ This is a full-stack mortgage and loan CRM (Customer Relationship Management) ap
 ### File Structure
 
 - `app/`: Next.js App Router pages and layouts
-  - `(dashboard)/`: Protected dashboard routes (clients, applications, tasks, settings)
+  - `(dashboard)/`: Protected dashboard routes (clients, applications, tasks, accounts, settings)
   - `api/auth/`: Authentication API endpoints
+  - `api/accounts/`: Bank account CRUD API endpoints
   - `login/`: Login page
-- `components/`: Reusable React components (AuthGuard, Sidebar, DashboardLayout)
+- `components/`: Reusable React components (AuthGuard, Sidebar, DashboardLayout, BankAccountModal)
 - `lib/`: Utility functions and configurations (Prisma client, session config, auth helpers)
 - `prisma/`: Database schema and seed script
 
