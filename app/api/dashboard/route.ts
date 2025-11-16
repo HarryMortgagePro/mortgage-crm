@@ -55,7 +55,6 @@ export async function GET() {
       },
       include: {
         client: true,
-        lender: true,
       },
       orderBy: { closingDate: 'asc' },
       take: 5,
@@ -90,7 +89,6 @@ export async function GET() {
       },
       include: {
         client: true,
-        lender: true,
       },
       orderBy: { renewalDate: 'asc' },
       take: 10,

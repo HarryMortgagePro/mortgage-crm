@@ -13,11 +13,11 @@ import {
 } from '@dnd-kit/core';
 
 type Application = {
-  id: number;
-  client: { id: number; firstName: string; lastName: string };
-  applicationType: string;
+  id: string;
+  client: { id: string; firstName: string; lastName: string };
+  dealType: string;
   purpose: string;
-  status: string;
+  stage: string;
   lenderName: string | null;
   mortgageAmount: number | null;
   closingDate: Date | null;
@@ -54,20 +54,20 @@ export default function ApplicationsPage() {
 
     if (!over) return;
 
-    const appId = typeof active.id === 'string' ? parseInt(active.id) : active.id;
-    const newStatus = String(over.id);
+    const appId = String(active.id);
+    const newStage = String(over.id);
 
-    await fetch(`/api/applications/${appId}/status`, {
+    await fetch(`/api/applications/${appId}/stage`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: newStatus }),
+      body: JSON.stringify({ stage: newStage }),
       credentials: 'include',
     });
 
     fetchApplications();
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this application?')) return;
     
     await fetch(`/api/applications/${id}`, { method: 'DELETE', credentials: 'include' });
@@ -157,7 +157,7 @@ export default function ApplicationsPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Link href={`/applications/${app.id}`} className="text-blue-600 hover:text-blue-800">
-                      {app.applicationType} - {app.purpose}
+                      {app.dealType} - {app.purpose}
                     </Link>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
@@ -168,7 +168,7 @@ export default function ApplicationsPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                      {app.status}
+                      {app.stage}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
@@ -190,11 +190,11 @@ export default function ApplicationsPage() {
       ) : (
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
           <div className="flex overflow-x-auto space-x-4 pb-4">
-            {STATUSES.map((status) => (
+            {STATUSES.map((stage) => (
               <KanbanColumn
-                key={status}
-                status={status}
-                applications={applications.filter((app) => app.status === status)}
+                key={stage}
+                stage={stage}
+                applications={applications.filter((app) => app.stage === stage)}
               />
             ))}
           </div>
@@ -204,9 +204,9 @@ export default function ApplicationsPage() {
   );
 }
 
-function KanbanColumn({ status, applications }: { status: string; applications: Application[] }) {
+function KanbanColumn({ stage, applications }: { stage: string; applications: Application[] }) {
   const { useDroppable } = require('@dnd-kit/core');
-  const { setNodeRef } = useDroppable({ id: status });
+  const { setNodeRef } = useDroppable({ id: stage });
   const { useDraggable } = require('@dnd-kit/core');
 
   return (

@@ -6,38 +6,40 @@ import { useRouter } from 'next/navigation';
 import { DOCUMENT_TYPES, DOCUMENT_STATUSES } from '@/lib/constants';
 
 type Application = {
-  id: number;
-  client: { id: number; firstName: string; lastName: string };
-  applicationType: string;
+  id: string;
+  client: { id: string; firstName: string; lastName: string };
+  dealType: string;
   purpose: string;
-  status: string;
+  stage: string;
   propertyAddress: string | null;
   propertyCity: string | null;
   propertyProvince: string | null;
   propertyType: string | null;
   purchasePrice: number | null;
   mortgageAmount: number | null;
-  downPaymentAmount: number | null;
+  downPayment: number | null;
   interestRate: number | null;
   rateType: string | null;
   termYears: number | null;
   amortizationYears: number | null;
   lenderName: string | null;
   applicationDate: Date | null;
-  conditionsDueDate: Date | null;
+  submissionDate: Date | null;
+  approvalDate: Date | null;
   closingDate: Date | null;
   fundedDate: Date | null;
+  renewalDate: Date | null;
   notes: string | null;
   tasks: Array<{
-    id: number;
+    id: string;
     title: string;
     dueDate: Date | null;
     status: string;
     priority: string | null;
   }>;
   documents: Array<{
-    id: number;
-    docType: string;
+    id: string;
+    type: string;
     status: string;
     notes: string | null;
   }>;
@@ -47,7 +49,7 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
   const router = useRouter();
   const [application, setApplication] = useState<Application | null>(null);
   const [isAddingDoc, setIsAddingDoc] = useState(false);
-  const [newDoc, setNewDoc] = useState({ docType: '', status: 'Requested', notes: '' });
+  const [newDoc, setNewDoc] = useState({ type: '', status: 'Requested', notes: '' });
 
   const fetchApplication = async () => {
     const res = await fetch(`/api/applications/${params.id}`, { credentials: 'include' });
@@ -64,7 +66,7 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
   }, [params.id]);
 
   const handleAddDocument = async () => {
-    if (!newDoc.docType) {
+    if (!newDoc.type) {
       alert('Please select a document type');
       return;
     }
@@ -75,14 +77,14 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...newDoc,
-          applicationId: parseInt(params.id),
+          applicationId: params.id,
         }),
         credentials: 'include',
       });
 
       if (res.ok) {
         setIsAddingDoc(false);
-        setNewDoc({ docType: '', status: 'Requested', notes: '' });
+        setNewDoc({ type: '', status: 'Requested', notes: '' });
         fetchApplication();
       } else {
         alert('Failed to add document');
@@ -92,7 +94,7 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
     }
   };
 
-  const handleDeleteDocument = async (docId: number) => {
+  const handleDeleteDocument = async (docId: string) => {
     if (!confirm('Are you sure you want to delete this document record?')) return;
     
     await fetch(`/api/documents/${docId}`, { method: 'DELETE', credentials: 'include' });
@@ -126,18 +128,18 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
             </dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-gray-500">Application Type</dt>
-            <dd className="text-sm text-gray-900">{application.applicationType}</dd>
+            <dt className="text-sm font-medium text-gray-500">Deal Type</dt>
+            <dd className="text-sm text-gray-900">{application.dealType}</dd>
           </div>
           <div>
             <dt className="text-sm font-medium text-gray-500">Purpose</dt>
             <dd className="text-sm text-gray-900">{application.purpose}</dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-gray-500">Status</dt>
+            <dt className="text-sm font-medium text-gray-500">Stage</dt>
             <dd>
               <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                {application.status}
+                {application.stage}
               </span>
             </dd>
           </div>
@@ -180,7 +182,7 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
           <div>
             <dt className="text-sm font-medium text-gray-500">Down Payment</dt>
             <dd className="text-sm text-gray-900">
-              ${application.downPaymentAmount?.toLocaleString() || '-'}
+              ${application.downPayment?.toLocaleString() || '-'}
             </dd>
           </div>
           <div>
@@ -218,9 +220,15 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
             </dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-gray-500">Conditions Due</dt>
+            <dt className="text-sm font-medium text-gray-500">Submission Date</dt>
             <dd className="text-sm text-gray-900">
-              {application.conditionsDueDate ? new Date(application.conditionsDueDate).toLocaleDateString() : '-'}
+              {application.submissionDate ? new Date(application.submissionDate).toLocaleDateString() : '-'}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-sm font-medium text-gray-500">Approval Date</dt>
+            <dd className="text-sm text-gray-900">
+              {application.approvalDate ? new Date(application.approvalDate).toLocaleDateString() : '-'}
             </dd>
           </div>
           <div>
@@ -233,6 +241,12 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
             <dt className="text-sm font-medium text-gray-500">Funded Date</dt>
             <dd className="text-sm text-gray-900">
               {application.fundedDate ? new Date(application.fundedDate).toLocaleDateString() : '-'}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-sm font-medium text-gray-500">Renewal Date</dt>
+            <dd className="text-sm text-gray-900">
+              {application.renewalDate ? new Date(application.renewalDate).toLocaleDateString() : '-'}
             </dd>
           </div>
         </dl>
@@ -282,8 +296,8 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Document Type</label>
                 <select
-                  value={newDoc.docType}
-                  onChange={(e) => setNewDoc({ ...newDoc, docType: e.target.value })}
+                  value={newDoc.type}
+                  onChange={(e) => setNewDoc({ ...newDoc, type: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                 >
                   <option value="">Select type...</option>
@@ -317,7 +331,7 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
             <div className="flex space-x-2 mt-3">
               <button
                 onClick={handleAddDocument}
-                disabled={!newDoc.docType}
+                disabled={!newDoc.type}
                 className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-50"
               >
                 Add
@@ -325,7 +339,7 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
               <button
                 onClick={() => {
                   setIsAddingDoc(false);
-                  setNewDoc({ docType: '', status: 'Requested', notes: '' });
+                  setNewDoc({ type: '', status: 'Requested', notes: '' });
                 }}
                 className="px-3 py-1 border border-gray-300 text-sm rounded-md hover:bg-gray-50"
               >
@@ -340,7 +354,7 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
             {application.documents.map((doc) => (
               <li key={doc.id} className="py-3">
                 <div className="flex justify-between">
-                  <span className="font-medium">{doc.docType}</span>
+                  <span className="font-medium">{doc.type}</span>
                   <div className="flex items-center space-x-2">
                     <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
                       {doc.status}

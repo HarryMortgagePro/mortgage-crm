@@ -13,8 +13,6 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       where: { id: params.id },
       include: {
         client: true,
-        lender: true,
-        product: true,
         tasks: {
           orderBy: { dueDate: 'asc' },
         },
@@ -67,8 +65,6 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       data: processedData,
       include: {
         client: true,
-        lender: true,
-        product: true,
       },
     });
     return NextResponse.json(application);

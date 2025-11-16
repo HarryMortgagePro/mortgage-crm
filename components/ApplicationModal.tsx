@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { STATUSES } from '@/lib/constants';
 
 type Client = {
-  id: number;
+  id: string;
   firstName: string;
   lastName: string;
 };
@@ -19,14 +19,14 @@ export default function ApplicationModal({ application, onClose, onSave }: Appli
   const [clients, setClients] = useState<Client[]>([]);
   const [formData, setFormData] = useState({
     clientId: '',
-    applicationType: 'Mortgage',
+    dealType: 'Purchase',
     purpose: 'Purchase',
-    status: 'Lead',
+    stage: 'Lead',
     lenderName: '',
     propertyAddress: '',
     propertyCity: '',
     propertyProvince: '',
-    propertyPostalCode: '',
+    propertyPostal: '',
     purchasePrice: '',
     downPayment: '',
     propertyType: 'Single Family',
@@ -57,15 +57,15 @@ export default function ApplicationModal({ application, onClose, onSave }: Appli
   useEffect(() => {
     if (application) {
       setFormData({
-        clientId: application.clientId?.toString() || '',
-        applicationType: application.applicationType || 'Mortgage',
+        clientId: application.clientId || '',
+        dealType: application.dealType || 'Purchase',
         purpose: application.purpose || 'Purchase',
-        status: application.status || 'Lead',
+        stage: application.stage || 'Lead',
         lenderName: application.lenderName || '',
         propertyAddress: application.propertyAddress || '',
         propertyCity: application.propertyCity || '',
         propertyProvince: application.propertyProvince || '',
-        propertyPostalCode: application.propertyPostalCode || '',
+        propertyPostal: application.propertyPostal || '',
         purchasePrice: application.purchasePrice?.toString() || '',
         downPayment: application.downPayment?.toString() || '',
         propertyType: application.propertyType || 'Single Family',
@@ -97,7 +97,7 @@ export default function ApplicationModal({ application, onClose, onSave }: Appli
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...formData,
-        clientId: parseInt(formData.clientId),
+        clientId: formData.clientId,
         purchasePrice: formData.purchasePrice ? parseFloat(formData.purchasePrice) : null,
         downPayment: formData.downPayment ? parseFloat(formData.downPayment) : null,
         annualIncome: formData.annualIncome ? parseFloat(formData.annualIncome) : null,
@@ -143,16 +143,17 @@ export default function ApplicationModal({ application, onClose, onSave }: Appli
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Application Type</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Deal Type</label>
               <select
-                value={formData.applicationType}
-                onChange={(e) => setFormData({ ...formData, applicationType: e.target.value })}
+                value={formData.dealType}
+                onChange={(e) => setFormData({ ...formData, dealType: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
               >
-                <option>Mortgage</option>
-                <option>HELOC</option>
+                <option>Purchase</option>
                 <option>Refinance</option>
-                <option>Personal Loan</option>
+                <option>Renewal</option>
+                <option>Switch</option>
+                <option>HELOC</option>
               </select>
             </div>
 
@@ -163,18 +164,17 @@ export default function ApplicationModal({ application, onClose, onSave }: Appli
                 onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
               >
-                <option>Purchase</option>
-                <option>Refinance</option>
-                <option>Renewal</option>
-                <option>Switch</option>
+                <option>Owner-Occupied</option>
+                <option>Rental</option>
+                <option>Second Home</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Stage</label>
               <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                value={formData.stage}
+                onChange={(e) => setFormData({ ...formData, stage: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
               >
                 {STATUSES.map((status) => (

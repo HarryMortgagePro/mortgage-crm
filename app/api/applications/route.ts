@@ -10,7 +10,6 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const stage = searchParams.get('stage') || '';
-  const lenderId = searchParams.get('lenderId') || '';
   const dealType = searchParams.get('dealType') || '';
   const search = searchParams.get('search') || '';
   const sortByParam = searchParams.get('sortBy') || 'createdAt';
@@ -25,7 +24,6 @@ export async function GET(request: NextRequest) {
     where: {
       AND: [
         stage ? { stage } : {},
-        lenderId ? { lenderId } : {},
         dealType ? { dealType } : {},
         search ? {
           OR: [
@@ -33,15 +31,13 @@ export async function GET(request: NextRequest) {
             { client: { lastName: { contains: search, mode: 'insensitive' } } },
             { propertyAddress: { contains: search, mode: 'insensitive' } },
             { propertyCity: { contains: search, mode: 'insensitive' } },
-            { lender: { name: { contains: search, mode: 'insensitive' } } },
+            { lenderName: { contains: search, mode: 'insensitive' } },
           ],
         } : {},
       ],
     },
     include: {
       client: true,
-      lender: true,
-      product: true,
     },
     orderBy: { [sortBy]: sortOrder },
   });
@@ -72,8 +68,6 @@ export async function POST(request: NextRequest) {
       data: processedData,
       include: {
         client: true,
-        lender: true,
-        product: true,
       },
     });
     

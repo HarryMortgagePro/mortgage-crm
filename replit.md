@@ -15,6 +15,16 @@ This is a full-stack mortgage and loan CRM (Customer Relationship Management) ap
 
 ## Recent Changes
 
+- **2025-11-16**:
+  - **Removed Lenders and Products Features**:
+    - Removed Lender and Product models from database schema
+    - Removed lenderId and productId foreign keys from Application model
+    - Deleted `/api/lenders` and `/api/products` API routes
+    - Removed Lenders and Products links from sidebar navigation
+    - Updated Dashboard API to remove lender includes
+    - Application model now tracks lender information via simple text field (lenderName) instead of relationships
+    - Simplified application management by removing complex lender/product relationship tracking
+
 - **2024-11-16**: 
   - **Simplified Bank Accounts**:
     - Removed fields: account type, owner name, main user, currency
@@ -76,19 +86,16 @@ All models now use String IDs (cuid) instead of autoincrement Int for better sca
 2. **Application**: Comprehensive mortgage/loan tracking with:
    - Pipeline stages: Lead, App Taken/Background, Submitted, Approval, Funded, Declined
    - Property details: address, city, province, postal code, purchase price, down payment
-   - Mortgage details: amount, term years, rate type, interest rate
+   - Mortgage details: amount, term years, rate type, interest rate, lender name (text field)
    - Deal type: Purchase, Refinance, Renewal, Switch
-   - Lender and Product relationships (optional with SetNull)
    - Qualification fields: GDS ratio, TDS ratio, max qualification amount
    - Important dates: application, submission, approval, closing, renewal
-   - Relations: client (required), lender, product, documents, tasks, communications, commissions
-3. **Lender**: Financial institutions (name, type, contact info, active status)
-4. **Product**: Mortgage products linked to lenders (name, rate type, minimum rate, features, restrictions)
-5. **Document**: Application document tracking (name, category, required, received, receivedDate, conditionGroup, conditionStatus)
-6. **Communication**: Client communication log (type, direction, subject, notes, communicationDate)
-7. **Commission**: Commission tracking per application (type, amount, percentage, expectedDate, receivedDate, reconciled status)
-8. **Task**: Task management (title, description, status, priority, category, dueDate, createdForStage)
-9. **BankAccount**: Client bank account information (bank name, account nickname, masked account number, usage, opened date, status, notes) - all fields optional except clientId
+   - Relations: client (required), documents, tasks, communications, commissions
+3. **Document**: Application document tracking (name, category, required, received, receivedDate, conditionGroup, conditionStatus)
+4. **Communication**: Client communication log (type, direction, subject, notes, communicationDate)
+5. **Commission**: Commission tracking per application (type, amount, percentage, expectedDate, receivedDate, reconciled status)
+6. **Task**: Task management (title, description, status, priority, category, dueDate, createdForStage, recurring task support)
+7. **BankAccount**: Client bank account information (bank name, account nickname, masked account number, usage, opened date, status, notes) - all fields optional except clientId
 
 ### Key Features
 
@@ -101,15 +108,18 @@ All models now use String IDs (cuid) instead of autoincrement Int for better sca
 - **Clients**: Full CRUD operations with search and filtering
 - **Applications**: 
   - Complete mortgage pipeline tracking
-  - Filters: stage, lender, deal type, search
+  - Filters: stage, deal type, search
   - Sorting: by createdAt, closingDate, mortgageAmount, stage, applicationDate
-  - Includes lender and product details
-- **Lenders**: Full CRUD with product and application counts
-- **Products**: Full CRUD with lender filtering and rate type filtering
+  - Lender information stored as text field
 - **Documents**: Document tracking per application with condition groups and received status
 - **Communications**: Client communication log with type and date filtering
 - **Commissions**: Commission tracking with reconciled status
-- **Tasks**: Task management with priorities, categories, due dates, and pipeline stage tracking
+- **Tasks**: 
+  - Calendar-based task management interface
+  - Priorities (high, medium, low) with color coding
+  - Categories and due dates
+  - Recurring task support (daily, weekly, monthly, yearly)
+  - Click-to-add task creation on any calendar day
 - **Accounts**: Bank account management with client/status/bank filtering, search, and pagination
 - **Settings**: View configuration constants
 
@@ -123,16 +133,14 @@ All models now use String IDs (cuid) instead of autoincrement Int for better sca
 ### File Structure
 
 - `app/`: Next.js App Router pages and layouts
-  - `(dashboard)/`: Protected dashboard routes (page.tsx = dashboard, clients, applications, lenders, products, tasks, accounts, settings)
+  - `(dashboard)/`: Protected dashboard routes (page.tsx = dashboard, clients, applications, tasks, accounts, settings)
   - `api/auth/`: Authentication API endpoints (login, logout, check)
   - `api/applications/`: Application CRUD with enhanced filtering and sorting
   - `api/clients/`: Client CRUD with enhanced includes
-  - `api/lenders/`: Lender CRUD API endpoints
-  - `api/products/`: Product CRUD API endpoints
   - `api/documents/`: Document CRUD API endpoints
   - `api/communications/`: Communication CRUD API endpoints
   - `api/commissions/`: Commission CRUD API endpoints
-  - `api/tasks/`: Task CRUD API endpoints
+  - `api/tasks/`: Task CRUD API endpoints with recurring task support
   - `api/accounts/`: Bank account CRUD API endpoints
   - `api/dashboard/`: Dashboard statistics and summaries
   - `login/`: Login page

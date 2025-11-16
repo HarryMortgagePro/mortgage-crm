@@ -9,14 +9,14 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 
   try {
-    const { status } = await request.json();
+    const { stage } = await request.json();
     const application = await prisma.application.update({
-      where: { id: parseInt(params.id) },
-      data: { status },
+      where: { id: params.id },
+      data: { stage },
       include: { client: true },
     });
     return NextResponse.json(application);
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to update status' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to update stage' }, { status: 500 });
   }
 }

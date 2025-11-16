@@ -55,11 +55,7 @@ model Application {
   termYears        Int?
   rateType         String?  // Fixed / Variable
   interestRate     Float?
-
-  lenderId        String?
-  lender          Lender?   @relation(fields: [lenderId], references: [id], onDelete: SetNull)
-  productId       String?
-  product         Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  lenderName       String?  // Lender name as simple text field
 
   applicationDate DateTime?
   submissionDate  DateTime?
@@ -99,41 +95,6 @@ model BankAccount {
 
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
-}
-
-model Lender {
-  id          String   @id @default(cuid())
-  name        String
-  contactName String?
-  email       String?
-  phone       String?
-  portalUrl   String?
-  notes       String?
-
-  products    Product[]
-  applications Application[]
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Product {
-  id          String   @id @default(cuid())
-  lenderId    String
-  lender      Lender   @relation(fields: [lenderId], references: [id], onDelete: Cascade)
-
-  name        String
-  rateType    String?  // Fixed / Variable
-  termYears   Int?
-  interestRate Float?
-  minLtv      Float?
-  maxLtv      Float?
-  notes       String?
-
-  applications Application[]
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
 }
 
 model Document {
