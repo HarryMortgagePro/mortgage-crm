@@ -23,6 +23,7 @@ model Client {
   notes          String?
 
   applications   Application[]
+  properties     Property[]
   bankAccounts   BankAccount[]
   tasks          Task[]
   communications Communication[]
@@ -35,6 +36,9 @@ model Application {
   id               String   @id @default(cuid())
   clientId         String
   client           Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  propertyId       String?  // Optional link to saved property
+  property         Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
 
   stage            String   // Lead, App Taken/Background, Submitted, Approval, Funded, Declined
 
@@ -79,6 +83,31 @@ model Application {
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+model Property {
+  id                    String   @id @default(cuid())
+  clientId              String
+  client                Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  // Property Details
+  propertyAddress       String
+  propertyCity          String
+  propertyProvince      String
+  propertyType          String?  // Condo / House / Duplex / Multi-Unit / Commercial
+
+  // Default Expenses (to pre-fill calculator)
+  propertyTaxAnnual     Float?   // Annual property tax
+  heatingMonthly        Float?   // Monthly heating cost
+  condoFeesMonthly      Float?   // Monthly condo fees (if applicable)
+  otherExpensesMonthly  Float?   // Other monthly property expenses
+
+  notes                 String?
+
+  applications          Application[] // Applications using this property
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }
 
 model BankAccount {
