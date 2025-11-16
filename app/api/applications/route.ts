@@ -27,11 +27,11 @@ export async function GET(request: NextRequest) {
         dealType ? { dealType } : {},
         search ? {
           OR: [
-            { client: { firstName: { contains: search, mode: 'insensitive' } } },
-            { client: { lastName: { contains: search, mode: 'insensitive' } } },
-            { propertyAddress: { contains: search, mode: 'insensitive' } },
-            { propertyCity: { contains: search, mode: 'insensitive' } },
-            { lenderName: { contains: search, mode: 'insensitive' } },
+            { client: { firstName: { contains: search } } },
+            { client: { lastName: { contains: search } } },
+            { propertyAddress: { contains: search } },
+            { propertyCity: { contains: search } },
+            { lenderName: { contains: search } },
           ],
         } : {},
       ],
