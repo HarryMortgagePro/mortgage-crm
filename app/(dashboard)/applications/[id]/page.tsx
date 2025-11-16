@@ -188,7 +188,32 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
             <dt className="text-sm font-medium text-gray-500">Lender</dt>
             <dd className="text-sm text-gray-900">{application.lenderName || '-'}</dd>
           </div>
+          {application.gdsRatio !== null && application.tdsRatio !== null && (
+            <>
+              <div>
+                <dt className="text-sm font-medium text-gray-500">GDS Ratio</dt>
+                <dd>
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${getBadgeColor(application.gdsRatio, 39)}`}>
+                    {application.gdsRatio.toFixed(1)}%
+                  </span>
+                </dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500">TDS Ratio</dt>
+                <dd>
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${getBadgeColor(application.tdsRatio, 44)}`}>
+                    {application.tdsRatio.toFixed(1)}%
+                  </span>
+                </dd>
+              </div>
+            </>
+          )}
         </dl>
+        {application.qualificationSummary && (
+          <div className="mt-4 p-3 bg-gray-50 rounded-md">
+            <p className="text-sm text-gray-700">{application.qualificationSummary}</p>
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-lg shadow p-6">
