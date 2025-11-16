@@ -162,10 +162,10 @@ export default function CalculatorPage() {
       setPropertyAddress(property.propertyAddress);
       setPropertyCity(property.propertyCity);
       setPropertyProvince(property.propertyProvince);
-      if (property.propertyTaxAnnual) setPropertyTax(property.propertyTaxAnnual);
-      if (property.heatingMonthly) setHeating(property.heatingMonthly);
-      if (property.condoFeesMonthly) setCondoFees(property.condoFeesMonthly);
-      if (property.otherExpensesMonthly) setOtherExpenses(property.otherExpensesMonthly);
+      setPropertyTax(property.propertyTaxAnnual ?? 0);
+      setHeating(property.heatingMonthly ?? 0);
+      setCondoFees(property.condoFeesMonthly ?? 0);
+      setOtherExpenses(property.otherExpensesMonthly ?? 0);
     }
   };
 
