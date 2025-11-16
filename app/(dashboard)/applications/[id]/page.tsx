@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { DOCUMENT_TYPES, DOCUMENT_STATUSES } from '@/lib/constants';
+import QualificationCalculator from '@/components/QualificationCalculator';
 
 type Application = {
   id: string;
@@ -29,6 +30,9 @@ type Application = {
   closingDate: Date | null;
   fundedDate: Date | null;
   renewalDate: Date | null;
+  gdsRatio: number | null;
+  tdsRatio: number | null;
+  qualificationSummary: string | null;
   notes: string | null;
   tasks: Array<{
     id: string;
@@ -48,6 +52,7 @@ type Application = {
 export default function ApplicationDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const [application, setApplication] = useState<Application | null>(null);
+  const [activeTab, setActiveTab] = useState('overview');
   const [isAddingDoc, setIsAddingDoc] = useState(false);
   const [newDoc, setNewDoc] = useState({ type: '', status: 'Requested', notes: '' });
 
@@ -105,6 +110,20 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
     return <div className="p-8">Loading...</div>;
   }
 
+  const tabs = [
+    { id: 'overview', name: 'Overview' },
+    { id: 'tasks', name: 'Tasks' },
+    { id: 'documents', name: 'Documents' },
+    { id: 'qualification', name: 'Qualification (GDS/TDS)' },
+  ];
+
+  const getBadgeColor = (value: number | null, max: number) => {
+    if (!value) return 'bg-gray-100 text-gray-800';
+    if (value <= max) return 'bg-green-100 text-green-800';
+    if (value <= max + 2) return 'bg-yellow-100 text-yellow-800';
+    return 'bg-red-100 text-red-800';
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -116,7 +135,29 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
         </Link>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`
+                whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm
+                ${activeTab === tab.id
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }
+              `}
+            >
+              {tab.name}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {activeTab === 'overview' && (
+        <>
+          <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-semibold mb-4">Overview</h2>
         <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -251,9 +292,12 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
           </div>
         </dl>
       </div>
+        </>
+      )}
 
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Tasks</h2>
+      {activeTab === 'tasks' && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">Tasks</h2>
         {application.tasks.length > 0 ? (
           <ul className="divide-y divide-gray-200">
             {application.tasks.map((task) => (
@@ -277,11 +321,13 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
         ) : (
           <p className="text-gray-500">No tasks found.</p>
         )}
-      </div>
+        </div>
+      )}
 
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Documents</h2>
+      {activeTab === 'documents' && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Documents</h2>
           <button
             onClick={() => setIsAddingDoc(true)}
             className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
@@ -374,13 +420,16 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
         ) : (
           <p className="text-gray-500">No documents found.</p>
         )}
-      </div>
-
-      {application.notes && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Notes</h2>
-          <p className="text-gray-700 whitespace-pre-wrap">{application.notes}</p>
         </div>
+      )}
+
+      {activeTab === 'qualification' && (
+        <QualificationCalculator
+          applicationId={params.id}
+          mortgageAmount={application.mortgageAmount}
+          interestRate={application.interestRate}
+          amortizationYears={application.amortizationYears}
+        />
       )}
     </div>
   );
