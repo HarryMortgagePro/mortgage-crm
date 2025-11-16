@@ -16,7 +16,22 @@ This is a full-stack mortgage and loan CRM (Customer Relationship Management) ap
 ## Recent Changes
 
 - **2025-11-16**:
-  - **Added GDS/TDS Qualification Calculator** (similar to Filogix):
+  - **Restructured GDS/TDS Calculator as Standalone Page**:
+    - Moved calculator from application detail tab to standalone `/calculator` route
+    - Added "Calculator" link to sidebar navigation (accessible from anywhere)
+    - Calculator can work standalone OR link to an application to pre-fill data
+    - Application selector dropdown to pull in existing application details
+    - Property details section (address, city, province, purchase price, down payment)
+    - Comprehensive input sections for income, property expenses, and debts
+    - "Clear & Start Fresh" button for standalone calculations
+    - Save functionality updates linked application's qualification data
+    - Removed Qualification tab from application detail page (now only Overview, Tasks, Documents)
+  
+  - **Fixed Application Creation Bug**:
+    - Removed obsolete database fields (annualIncome, totalAssets, totalDebts, creditScore, employmentStatus)
+    - Applications now save successfully without validation errors
+  
+  - **Previous GDS/TDS Qualification Calculator** (similar to Filogix):
     - New Qualification model to store detailed income, expenses, and debt data per application
     - Comprehensive calculation logic for GDS (Gross Debt Service) and TDS (Total Debt Service) ratios
     - GDS formula: (Property Expenses) / Gross Monthly Income × 100
@@ -137,16 +152,21 @@ All models now use String IDs (cuid) instead of autoincrement Int for better sca
   - Filters: stage, deal type, search
   - Sorting: by createdAt, closingDate, mortgageAmount, stage, applicationDate
   - Lender information stored as text field
-  - Tab-based detail view: Overview, Tasks, Documents, Qualification
-- **Qualification (GDS/TDS Calculator)**:
-  - Comprehensive income tracking (applicant, co-applicant, rental, other income)
-  - Property expense calculation (mortgage, taxes, heating, condo fees)
-  - Debt obligation tracking (credit cards, loans, lines of credit)
-  - Automatic GDS/TDS ratio calculation with industry-standard formulas
-  - Color-coded qualification status (green = pass, yellow = marginal, red = fail)
-  - Customizable max GDS/TDS limits per application
-  - Results sync to Application model for dashboard visibility
-  - Auto-prefill mortgage payment from application data
+  - Tab-based detail view: Overview, Tasks, Documents
+- **Calculator (GDS/TDS Qualification Calculator)**:
+  - Standalone page accessible from sidebar navigation
+  - Optional application linking to pre-fill property and mortgage data
+  - Property Details: address, city, province, purchase price, down payment
+  - Income Sources: applicant, co-applicant, rental, other income (monthly)
+  - Property Expenses: mortgage payment, property tax (annual), heating, condo fees, other (monthly)
+  - Debt Obligations: credit cards, loans, lines of credit, other debts (monthly)
+  - Customizable max GDS/TDS limits (defaults: 39% GDS, 44% TDS)
+  - Real-time calculation with industry-standard formulas (50% condo fee adjustment)
+  - Color-coded results with progress bars (green = pass, yellow = marginal, red = fail)
+  - Qualification status message with detailed breakdown
+  - Save to Application feature (updates Application.gdsRatio, .tdsRatio, .qualificationSummary)
+  - "Clear & Start Fresh" for standalone calculations without application link
+  - Auto-prefill mortgage payment when application selected
 - **Documents**: Document tracking per application with condition groups and received status
 - **Communications**: Client communication log with type and date filtering
 - **Commissions**: Commission tracking with reconciled status
