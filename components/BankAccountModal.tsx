@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 type Client = {
-  id: number;
+  id: string;
   firstName: string;
   lastName: string;
 };
@@ -14,7 +14,6 @@ type BankAccountModalProps = {
   onSave: () => void;
 };
 
-const ACCOUNT_TYPES = ['Chequing', 'Savings', 'Business', 'Joint', 'Other'];
 const STATUSES = ['Active', 'Closed', 'Frozen'];
 
 export default function BankAccountModal({ account, onClose, onSave }: BankAccountModalProps) {
@@ -24,13 +23,9 @@ export default function BankAccountModal({ account, onClose, onSave }: BankAccou
     bankName: '',
     accountNickname: '',
     maskedAccountNumber: '',
-    accountType: 'Chequing',
-    ownerName: '',
-    mainUser: '',
     usedFor: '',
     openedDate: '',
-    status: 'Active',
-    currency: 'CAD',
+    status: '',
     notes: '',
   });
 
@@ -50,13 +45,9 @@ export default function BankAccountModal({ account, onClose, onSave }: BankAccou
         bankName: account.bankName || '',
         accountNickname: account.accountNickname || '',
         maskedAccountNumber: account.maskedAccountNumber || '',
-        accountType: account.accountType || 'Chequing',
-        ownerName: account.ownerName || '',
-        mainUser: account.mainUser || '',
         usedFor: account.usedFor || '',
         openedDate: account.openedDate?.split('T')[0] || '',
-        status: account.status || 'Active',
-        currency: account.currency || 'CAD',
+        status: account.status || '',
         notes: account.notes || '',
       });
     }
@@ -65,8 +56,8 @@ export default function BankAccountModal({ account, onClose, onSave }: BankAccou
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.clientId || !formData.bankName || !formData.maskedAccountNumber || !formData.ownerName) {
-      alert('Please fill in all required fields');
+    if (!formData.clientId) {
+      alert('Please select a client');
       return;
     }
 
@@ -79,7 +70,7 @@ export default function BankAccountModal({ account, onClose, onSave }: BankAccou
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          clientId: parseInt(formData.clientId),
+          clientId: formData.clientId,
         }),
         credentials: 'include',
       });
@@ -121,12 +112,9 @@ export default function BankAccountModal({ account, onClose, onSave }: BankAccou
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Bank Name <span className="text-red-500">*</span>
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
               <input
                 type="text"
-                required
                 value={formData.bankName}
                 onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -146,12 +134,9 @@ export default function BankAccountModal({ account, onClose, onSave }: BankAccou
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Masked Account Number <span className="text-red-500">*</span>
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Masked Account Number</label>
               <input
                 type="text"
-                required
                 value={formData.maskedAccountNumber}
                 onChange={(e) => setFormData({ ...formData, maskedAccountNumber: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -160,44 +145,17 @@ export default function BankAccountModal({ account, onClose, onSave }: BankAccou
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Account Type <span className="text-red-500">*</span>
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
               <select
-                required
-                value={formData.accountType}
-                onChange={(e) => setFormData({ ...formData, accountType: e.target.value })}
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {ACCOUNT_TYPES.map((type) => (
-                  <option key={type} value={type}>{type}</option>
+                <option value="">Select Status</option>
+                {STATUSES.map((status) => (
+                  <option key={status} value={status}>{status}</option>
                 ))}
               </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Owner Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.ownerName}
-                onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Legal account owner(s)"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Main User</label>
-              <input
-                type="text"
-                value={formData.mainUser}
-                onChange={(e) => setFormData({ ...formData, mainUser: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g. Spouse, Daughter, Company"
-              />
             </div>
 
             <div>
@@ -207,33 +165,6 @@ export default function BankAccountModal({ account, onClose, onSave }: BankAccou
                 value={formData.openedDate}
                 onChange={(e) => setFormData({ ...formData, openedDate: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status <span className="text-red-500">*</span>
-              </label>
-              <select
-                required
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {STATUSES.map((status) => (
-                  <option key={status} value={status}>{status}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
-              <input
-                type="text"
-                value={formData.currency}
-                onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g. CAD, USD"
               />
             </div>
 

@@ -15,7 +15,13 @@ This is a full-stack mortgage and loan CRM (Customer Relationship Management) ap
 
 ## Recent Changes
 
-- **2024-11-16**: Major Backend Overhaul - Full Mortgage Pipeline System
+- **2024-11-16**: 
+  - **Simplified Bank Accounts**:
+    - Removed fields: account type, owner name, main user, currency
+    - Made all fields optional (no required fields except client selection)
+    - Updated form and table display to reflect simplified structure
+  
+  - **Major Backend Overhaul - Full Mortgage Pipeline System**:
   - **Database Schema Transformation**:
     - Changed all IDs from Int autoincrement to String cuid() for better scalability
     - Added 5 new models: Lender, Product, Communication, Commission, Document
@@ -82,7 +88,7 @@ All models now use String IDs (cuid) instead of autoincrement Int for better sca
 6. **Communication**: Client communication log (type, direction, subject, notes, communicationDate)
 7. **Commission**: Commission tracking per application (type, amount, percentage, expectedDate, receivedDate, reconciled status)
 8. **Task**: Task management (title, description, status, priority, category, dueDate, createdForStage)
-9. **BankAccount**: Client bank account information (bank name, account nickname, masked account number, account type, owner name, main user, usage, opened date, status, currency, notes)
+9. **BankAccount**: Client bank account information (bank name, account nickname, masked account number, usage, opened date, status, notes) - all fields optional except clientId
 
 ### Key Features
 

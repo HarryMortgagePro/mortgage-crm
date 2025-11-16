@@ -89,16 +89,12 @@ model BankAccount {
   clientId            String
   client              Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
-  bankName            String
+  bankName            String?
   accountNickname     String?
-  maskedAccountNumber String
-  accountType         String   // Chequing / Savings / Business / Joint / Other
-  ownerName           String
-  mainUser            String?
+  maskedAccountNumber String?
   usedFor             String?
   openedDate          DateTime?
-  status              String   // Active / Closed / Frozen
-  currency            String?  // CAD default
+  status              String?
   notes               String?
 
   createdAt           DateTime @default(now())

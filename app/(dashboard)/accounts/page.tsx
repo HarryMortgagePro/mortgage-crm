@@ -5,23 +5,19 @@ import Link from 'next/link';
 import BankAccountModal from '@/components/BankAccountModal';
 
 type BankAccount = {
-  id: number;
-  client: { id: number; firstName: string; lastName: string };
-  bankName: string;
+  id: string;
+  client: { id: string; firstName: string; lastName: string };
+  bankName: string | null;
   accountNickname: string | null;
-  maskedAccountNumber: string;
-  accountType: string;
-  ownerName: string;
-  mainUser: string | null;
+  maskedAccountNumber: string | null;
   usedFor: string | null;
   openedDate: Date | null;
-  status: string;
-  currency: string | null;
+  status: string | null;
   notes: string | null;
 };
 
 type Client = {
-  id: number;
+  id: string;
   firstName: string;
   lastName: string;
 };
@@ -66,7 +62,7 @@ export default function AccountsPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this bank account? This cannot be undone.')) return;
     
     const res = await fetch(`/api/accounts/${id}`, { method: 'DELETE', credentials: 'include' });
@@ -80,7 +76,7 @@ export default function AccountsPage() {
     setIsModalOpen(true);
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | null) => {
     switch (status) {
       case 'Active':
         return 'bg-green-100 text-green-800';
@@ -189,7 +185,7 @@ export default function AccountsPage() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Nickname, owner, user..."
+              placeholder="Nickname, account number..."
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -208,12 +204,6 @@ export default function AccountsPage() {
                   Bank / Account
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Owner
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Main User
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Used For
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -230,7 +220,7 @@ export default function AccountsPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {currentAccounts.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                     No bank accounts found. Click &quot;+ Add Account&quot; to create one.
                   </td>
                 </tr>
@@ -248,17 +238,11 @@ export default function AccountsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm">
-                        <div className="font-medium text-gray-900">{account.bankName}</div>
+                        <div className="font-medium text-gray-900">{account.bankName || '—'}</div>
                         <div className="text-gray-500">
-                          {account.accountNickname || account.maskedAccountNumber}
+                          {account.accountNickname || account.maskedAccountNumber || '—'}
                         </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {account.ownerName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {account.mainUser || '—'}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       <div className="max-w-xs truncate" title={account.usedFor || ''}>
@@ -269,9 +253,13 @@ export default function AccountsPage() {
                       {formatDate(account.openedDate)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(account.status)}`}>
-                        {account.status}
-                      </span>
+                      {account.status ? (
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(account.status)}`}>
+                          {account.status}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <button
