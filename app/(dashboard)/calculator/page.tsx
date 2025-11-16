@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { calculateMortgagePayment } from '@/lib/qualification';
+import { PropertyModal, PropertyFormData } from '@/components/PropertyModal';
 
 type Application = {
   id: string;
+  clientId: string;
   client: { firstName: string; lastName: string };
   propertyAddress: string;
   propertyCity: string;
@@ -16,9 +18,26 @@ type Application = {
   amortizationYears: number | null;
 };
 
+type Property = {
+  id: string;
+  clientId: string;
+  propertyAddress: string;
+  propertyCity: string;
+  propertyProvince: string;
+  propertyType?: string;
+  propertyTaxAnnual?: number;
+  heatingMonthly?: number;
+  condoFeesMonthly?: number;
+  otherExpensesMonthly?: number;
+  client: { firstName: string; lastName: string };
+};
+
 export default function CalculatorPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [selectedAppId, setSelectedAppId] = useState<string>('');
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string>('');
+  const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Property Details
@@ -65,6 +84,18 @@ export default function CalculatorPage() {
     fetchApplications();
   }, []);
 
+  useEffect(() => {
+    if (selectedAppId) {
+      const app = applications.find(a => a.id === selectedAppId);
+      if (app?.clientId) {
+        fetchProperties(app.clientId);
+      }
+    } else {
+      setProperties([]);
+      setSelectedPropertyId('');
+    }
+  }, [selectedAppId, applications]);
+
   const fetchApplications = async () => {
     try {
       const res = await fetch('/api/applications', { credentials: 'include' });
@@ -79,8 +110,24 @@ export default function CalculatorPage() {
     }
   };
 
+  const fetchProperties = async (clientId?: string) => {
+    try {
+      const url = clientId ? `/api/properties?clientId=${clientId}` : '/api/properties';
+      const res = await fetch(url, { credentials: 'include' });
+      if (!res.ok) {
+        console.error('Failed to fetch properties');
+        return;
+      }
+      const data = await res.json();
+      if (Array.isArray(data)) setProperties(data);
+    } catch (error) {
+      console.error('Error fetching properties:', error);
+    }
+  };
+
   const handleApplicationSelect = (appId: string) => {
     setSelectedAppId(appId);
+    setSelectedPropertyId(''); // Clear property selection when application changes
     if (!appId) {
       clearForm();
       return;
@@ -103,6 +150,56 @@ export default function CalculatorPage() {
         );
         setMortgagePayment(payment);
       }
+    }
+  };
+
+  const handlePropertySelect = (propertyId: string) => {
+    setSelectedPropertyId(propertyId);
+    if (!propertyId) return;
+
+    const property = properties.find(p => p.id === propertyId);
+    if (property) {
+      setPropertyAddress(property.propertyAddress);
+      setPropertyCity(property.propertyCity);
+      setPropertyProvince(property.propertyProvince);
+      if (property.propertyTaxAnnual) setPropertyTax(property.propertyTaxAnnual);
+      if (property.heatingMonthly) setHeating(property.heatingMonthly);
+      if (property.condoFeesMonthly) setCondoFees(property.condoFeesMonthly);
+      if (property.otherExpensesMonthly) setOtherExpenses(property.otherExpensesMonthly);
+    }
+  };
+
+  const handleSaveProperty = async (formData: PropertyFormData) => {
+    try {
+      const res = await fetch('/api/properties', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        const newProperty = await res.json();
+        setIsPropertyModalOpen(false);
+        
+        // Refresh properties for current client
+        const app = applications.find(a => a.id === selectedAppId);
+        if (app?.clientId) {
+          await fetchProperties(app.clientId);
+        }
+        
+        // Auto-select the new property
+        setSelectedPropertyId(newProperty.id);
+        handlePropertySelect(newProperty.id);
+        
+        alert('Property saved successfully!');
+      } else {
+        const errorData = await res.json();
+        alert(`Failed to save property: ${errorData.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error saving property:', error);
+      alert('Error saving property. Please try again.');
     }
   };
 
@@ -262,6 +359,49 @@ export default function CalculatorPage() {
           ))}
         </select>
       </div>
+
+      {/* Property Selector */}
+      {selectedAppId && (
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Property Library</h2>
+            <button
+              onClick={() => {
+                const app = applications.find(a => a.id === selectedAppId);
+                if (app) {
+                  setIsPropertyModalOpen(true);
+                }
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              disabled={!selectedAppId}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Add Property
+            </button>
+          </div>
+          {properties.length > 0 ? (
+            <select
+              value={selectedPropertyId}
+              onChange={(e) => handlePropertySelect(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            >
+              <option value="">Select a property to auto-fill expenses</option>
+              {properties.map((property) => (
+                <option key={property.id} value={property.id}>
+                  {property.propertyAddress}, {property.propertyCity}, {property.propertyProvince}
+                  {property.propertyType && ` (${property.propertyType})`}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <p className="text-gray-500 text-sm">
+              No properties saved for this client. Click "Add Property" to create one.
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column */}
@@ -611,6 +751,14 @@ export default function CalculatorPage() {
           </div>
         </div>
       )}
+
+      {/* Property Modal */}
+      <PropertyModal
+        isOpen={isPropertyModalOpen}
+        onClose={() => setIsPropertyModalOpen(false)}
+        onSave={handleSaveProperty}
+        clientId={selectedAppId ? applications.find(a => a.id === selectedAppId)?.clientId : undefined}
+      />
     </div>
   );
 }

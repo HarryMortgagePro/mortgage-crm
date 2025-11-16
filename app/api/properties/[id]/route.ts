@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
-import { getIronSession } from 'iron-session';
-import { sessionOptions } from '@/lib/session';
-import { cookies } from 'next/headers';
+import { getSession } from '@/lib/session';
 
 const PropertyUpdateSchema = z.object({
   propertyAddress: z.string().min(1, 'Address is required').optional(),
@@ -22,7 +20,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getIronSession(cookies(), sessionOptions);
+    const session = await getSession();
     if (!session.isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -67,7 +65,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getIronSession(cookies(), sessionOptions);
+    const session = await getSession();
     if (!session.isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -110,7 +108,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getIronSession(cookies(), sessionOptions);
+    const session = await getSession();
     if (!session.isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
