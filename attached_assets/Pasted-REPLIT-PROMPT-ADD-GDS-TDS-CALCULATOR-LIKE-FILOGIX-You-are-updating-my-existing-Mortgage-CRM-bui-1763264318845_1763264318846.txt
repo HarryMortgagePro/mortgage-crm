@@ -1,0 +1,312 @@
+REPLIT PROMPT – ADD GDS/TDS CALCULATOR (LIKE FILOGIX)
+
+You are updating my existing Mortgage CRM built with Next.js + TypeScript + Prisma + Tailwind + shadcn/ui.
+
+The app already has:
+
+Applications with fields for:
+
+Client, property, mortgage amount, rate, amortization, etc.
+
+gdsRatio, tdsRatio, qualificationSummary fields in the Application model (as previously defined).
+
+An Application Detail page.
+
+Your job:
+Add a GDS/TDS Calculator section inside each Application, working similarly to Filogix:
+
+Multiple income sources
+
+Property-related expenses
+
+Other debt payments
+
+Automatic GDS & TDS calculation
+
+Pass/Fail vs lender limits (defaults 39/44 but adjustable)
+
+1. DATA MODEL UPDATE (Prisma)
+
+Add a dedicated model to store the detailed qualification inputs for each application:
+
+model Qualification {
+  id                    String   @id @default(cuid())
+  applicationId         String   @unique
+  application           Application @relation(fields: [applicationId], references: [id])
+
+  // Income (monthly amounts)
+  applicantIncomeMonthly     Decimal? @db.Decimal(12,2) // base salary, hourly converted
+  coApplicantIncomeMonthly   Decimal? @db.Decimal(12,2)
+  rentalIncomeMonthly        Decimal? @db.Decimal(12,2) // net rental income used for qualifying
+  otherIncomeMonthly         Decimal? @db.Decimal(12,2) // child tax, pension, etc.
+
+  // Property expenses (monthly)
+  mortgagePaymentMonthly     Decimal? @db.Decimal(12,2) // PI payment at qualifying rate
+  propertyTaxAnnual          Decimal? @db.Decimal(12,2)
+  heatingMonthly             Decimal? @db.Decimal(12,2)
+  condoFeesMonthly           Decimal? @db.Decimal(12,2)
+  otherPropertyCostsMonthly  Decimal? @db.Decimal(12,2) // e.g. HOA
+
+  // Other debts (monthly)
+  creditCardsMonthly         Decimal? @db.Decimal(12,2)
+  loansMonthly               Decimal? @db.Decimal(12,2) // car, personal, student
+  linesOfCreditMonthly       Decimal? @db.Decimal(12,2)
+  otherDebtsMonthly          Decimal? @db.Decimal(12,2)
+
+  // Limits
+  maxGdsAllowed              Decimal? @db.Decimal(5,2) // default 39.00
+  maxTdsAllowed              Decimal? @db.Decimal(5,2) // default 44.00
+
+  // Results (also mirrored on Application)
+  calculatedGds              Decimal? @db.Decimal(5,2)
+  calculatedTds              Decimal? @db.Decimal(5,2)
+  qualifies                  Boolean? // true if both GDS & TDS within allowed limits
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+
+Also ensure Application already has:
+
+  gdsRatio             Decimal? @db.Decimal(5,2)
+  tdsRatio             Decimal? @db.Decimal(5,2)
+  qualificationSummary String?
+
+
+Run the migration.
+
+2. CALCULATION LOGIC (GDS & TDS)
+
+Implement a shared helper (e.g. lib/qualification.ts) with a pure function:
+
+export function calculateQualification(input: {
+  applicantIncomeMonthly?: number
+  coApplicantIncomeMonthly?: number
+  rentalIncomeMonthly?: number
+  otherIncomeMonthly?: number
+  mortgagePaymentMonthly?: number
+  propertyTaxAnnual?: number
+  heatingMonthly?: number
+  condoFeesMonthly?: number
+  otherPropertyCostsMonthly?: number
+  creditCardsMonthly?: number
+  loansMonthly?: number
+  linesOfCreditMonthly?: number
+  otherDebtsMonthly?: number
+  maxGdsAllowed?: number
+  maxTdsAllowed?: number
+}) {
+  // total gross monthly income
+  const grossMonthlyIncome =
+    (input.applicantIncomeMonthly ?? 0) +
+    (input.coApplicantIncomeMonthly ?? 0) +
+    (input.rentalIncomeMonthly ?? 0) +
+    (input.otherIncomeMonthly ?? 0)
+
+  // property expenses monthly
+  const propertyTaxMonthly = (input.propertyTaxAnnual ?? 0) / 12
+  const condoAdjusted = (input.condoFeesMonthly ?? 0) * 0.5 // like Filogix: 50% of condo fees
+  const propertyExpenses =
+    (input.mortgagePaymentMonthly ?? 0) +
+    propertyTaxMonthly +
+    (input.heatingMonthly ?? 0) +
+    condoAdjusted +
+    (input.otherPropertyCostsMonthly ?? 0)
+
+  // other monthly debt obligations
+  const otherDebts =
+    (input.creditCardsMonthly ?? 0) +
+    (input.loansMonthly ?? 0) +
+    (input.linesOfCreditMonthly ?? 0) +
+    (input.otherDebtsMonthly ?? 0)
+
+  // avoid divide-by-zero
+  if (!grossMonthlyIncome || grossMonthlyIncome <= 0) {
+    return {
+      grossMonthlyIncome: 0,
+      propertyExpenses,
+      otherDebts,
+      gds: 0,
+      tds: 0,
+      qualifies: false,
+    }
+  }
+
+  const gds = (propertyExpenses / grossMonthlyIncome) * 100
+  const tds = ((propertyExpenses + otherDebts) / grossMonthlyIncome) * 100
+
+  const maxGds = input.maxGdsAllowed ?? 39
+  const maxTds = input.maxTdsAllowed ?? 44
+
+  const qualifies = gds <= maxGds && tds <= maxTds
+
+  return {
+    grossMonthlyIncome,
+    propertyExpenses,
+    otherDebts,
+    gds,
+    tds,
+    maxGds,
+    maxTds,
+    qualifies,
+  }
+}
+
+
+When saving Qualification, also update the parent Application:
+
+application.gdsRatio = gds
+
+application.tdsRatio = tds
+
+application.qualificationSummary = e.g.
+"GDS ${gds.toFixed(1)}% (max ${maxGds}%), TDS ${tds.toFixed(1)}% (max ${maxTds}%) – Qualifies: Yes/No"
+
+3. UI – “Qualification” TAB IN APPLICATION DETAIL
+
+On the Application Detail page, add a new tab called “Qualification (GDS/TDS)”.
+
+3.1 Layout
+
+Two-column card layout on desktop; stacked on mobile:
+
+Left side – Income & Limits
+
+Section: Income (Monthly)
+
+Applicant income (input)
+
+Co-applicant income (input)
+
+Rental income used for qualifying (input)
+
+Other income (input)
+
+Small helper text under each:
+“Enter qualifying income (already grossed-up or adjusted as per lender rules).”
+
+Section: Limits
+
+Max GDS allowed – default prefilled to 39.00 but editable per application
+
+Max TDS allowed – default 44.00 but editable per application
+
+Right side – Expenses & Debts
+
+Section: Property Expenses
+
+Mortgage payment (Monthly PI at qualifying rate)
+
+Property Tax (Annual)
+
+Heating (Monthly)
+
+Condo Fees (Monthly – show helper “50% used in calculation”)
+
+Other property expenses (Monthly – HOA, lease land fee, etc.)
+
+Section: Other Debts (Monthly)
+
+Credit cards / revolving
+
+Loans (car, personal, student)
+
+Lines of credit
+
+Other debts
+
+At the bottom:
+
+Button: Calculate GDS/TDS (primary)
+
+Also auto-recalculate on change with a short debounce (optional but preferred).
+
+4. DISPLAYING RESULTS
+
+Under the form, show a Results card:
+
+Gross Monthly Income: $X,XXX
+
+Property Expenses (GDS numerator): $X,XXX
+
+Other Debts: $X,XXX
+
+Then:
+
+GDS: XX.X %
+
+Show colored badge:
+
+Green if ≤ maxGdsAllowed
+
+Yellow if within +2% of max
+
+Red if over limit
+
+TDS: YY.Y %
+
+Same badge logic.
+
+Qualification status line:
+
+If qualifies:
+
+“✅ Qualifies based on limits (GDS XX.X% ≤ MAX, TDS YY.Y% ≤ MAX).”
+
+If not:
+
+“❌ Does not qualify – GDS/TDS exceed allowed limits.”
+
+Also sync these values with the Application Summary tab:
+
+Show GDS and TDS ratios next to the basic application info.
+
+Use the same green/yellow/red badge styling there so you can see qualification at a glance.
+
+5. SERVER ACTION / API
+
+Implement a server action or API endpoint, e.g. updateQualification:
+
+Input: applicationId + all qualification fields.
+
+Logic:
+
+Save/update the Qualification row for that application.
+
+Call calculateQualification.
+
+Save results into Qualification (gds, tds, qualifies) and into parent Application (gdsRatio, tdsRatio, qualificationSummary).
+
+Return updated values to the client.
+
+Use the same pattern as existing CRUD in the project (e.g. Next.js Server Actions or REST routes).
+
+6. DEFAULT BEHAVIOUR
+
+When an application is created and the Qualification tab is opened for the first time:
+
+If no Qualification exists, create one with defaults:
+
+maxGdsAllowed = 39
+
+maxTdsAllowed = 44
+
+Optionally prefill:
+
+mortgagePaymentMonthly using the current application’s mortgage amount, interest rate, and amortization (simple amortization formula).
+
+This can be approximate; the user can override manually.
+
+7. UX & STYLE
+
+Match the existing CRM style (cards, spacing, typography, colours).
+
+Use shadcn/ui components:
+
+Card, Input, Label, Tabs, Badge, Button, Separator.
+
+Keep everything responsive and clean; labels left-aligned, units (Monthly/Annual) clearly shown next to inputs.
+
+End of prompt.
+Build this GDS/TDS qualification calculator, integrate it into each Application via a “Qualification (GDS/TDS)” tab, and ensure the results are stored on both the Qualification and Application models, using the formulas and behavior described above.

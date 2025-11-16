@@ -75,6 +75,7 @@ model Application {
   tasks           Task[]
   communications  Communication[]
   commissions     Commission[]
+  qualification   Qualification?
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -175,4 +176,36 @@ model Commission {
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+}
+
+model Qualification {
+  id                         String      @id @default(cuid())
+  applicationId              String      @unique
+  application                Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  applicantIncomeMonthly     Float?
+  coApplicantIncomeMonthly   Float?
+  rentalIncomeMonthly        Float?
+  otherIncomeMonthly         Float?
+
+  mortgagePaymentMonthly     Float?
+  propertyTaxAnnual          Float?
+  heatingMonthly             Float?
+  condoFeesMonthly           Float?
+  otherPropertyCostsMonthly  Float?
+
+  creditCardsMonthly         Float?
+  loansMonthly               Float?
+  linesOfCreditMonthly       Float?
+  otherDebtsMonthly          Float?
+
+  maxGdsAllowed              Float?
+  maxTdsAllowed              Float?
+
+  calculatedGds              Float?
+  calculatedTds              Float?
+  qualifies                  Boolean?
+
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
 }
