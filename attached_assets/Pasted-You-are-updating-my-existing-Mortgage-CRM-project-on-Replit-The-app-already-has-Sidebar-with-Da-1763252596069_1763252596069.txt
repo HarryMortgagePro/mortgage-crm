@@ -1,0 +1,481 @@
+You are updating my existing Mortgage CRM project on Replit.
+
+The app already has:
+
+Sidebar with: Dashboard, Clients, Applications, Accounts, Tasks, Settings
+
+Basic Clients tab
+
+Basic Dashboard and Applications list
+
+Tech stack: Next.js + TypeScript + Prisma + Tailwind + shadcn/ui (or equivalent).
+Use the same stack, styles, and patterns already in the project.
+
+Your job: turn this into a full working Mortgage CRM with proper data models, pages, and logic, using this final pipeline:
+
+Stage: Lead → App Taken/Background → Submitted → Approval → Funded → Declined
+
+1. DATA MODELS (Prisma or equivalent ORM)
+
+Create / update models as below. Use cuid() ids and timestamps.
+
+1.1 Client
+
+If not already present, ensure Client looks like:
+
+model Client {
+  id              String   @id @default(cuid())
+  firstName       String
+  lastName        String
+  email           String?
+  phone           String?
+  type            String?  // Individual / Corporation
+  primaryContact  String?  // if corporation
+  notes           String?
+
+  applications    Application[]
+  bankAccounts    BankAccount[]
+  tasks           Task[]
+  communications  Communication[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+1.2 Application (Mortgage Deal)
+model Application {
+  id               String   @id @default(cuid())
+  clientId         String
+  client           Client   @relation(fields: [clientId], references: [id])
+
+  stage            String   // one of: Lead, App Taken/Background, Submitted, Approval, Funded, Declined
+
+  dealType         String?  // Purchase / Refinance / Switch / HELOC / Private / Commercial
+  purpose          String?  // Owner-occupied / Rental / Second home, etc.
+
+  propertyAddress  String?
+  propertyCity     String?
+  propertyProvince String?
+  propertyPostal   String?
+  propertyType     String?  // Condo / House / Duplex / Multi-Unit / Commercial
+  occupancy        String?  // Owner / Rental / Second Home
+
+  purchasePrice    Decimal? @db.Decimal(12,2)
+  mortgageAmount   Decimal? @db.Decimal(12,2)
+  downPayment      Decimal? @db.Decimal(12,2)
+  amortizationYears Int?
+  termYears         Int?
+  rateType         String?  // Fixed / Variable
+  interestRate      Decimal? @db.Decimal(5,3) // e.g. 5.790
+
+  lenderId        String?
+  lender          Lender?   @relation(fields: [lenderId], references: [id])
+  productId       String?
+  product         Product?  @relation(fields: [productId], references: [id])
+
+  applicationDate DateTime?
+  submissionDate  DateTime?
+  approvalDate    DateTime?
+  closingDate     DateTime?
+  fundedDate      DateTime?
+  renewalDate     DateTime? // usually closingDate + termYears
+
+  maxQualification     Decimal? @db.Decimal(12,2)
+  gdsRatio             Decimal? @db.Decimal(5,2)
+  tdsRatio             Decimal? @db.Decimal(5,2)
+  qualificationSummary String?
+
+  documents       Document[]
+  tasks           Task[]
+  communications  Communication[]
+  commissions     Commission[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+1.3 BankAccount (already partly defined, keep as is or update)
+model BankAccount {
+  id                  String   @id @default(cuid())
+  clientId            String
+  client              Client   @relation(fields: [clientId], references: [id])
+
+  bankName            String
+  accountNickname     String?
+  maskedAccountNumber String
+  accountType         String   // Chequing / Savings / Business / Joint / Other
+  ownerName           String
+  mainUser            String?
+  usedFor             String?
+  openedDate          DateTime?
+  status              String   // Active / Closed / Frozen
+  currency            String?  // CAD default
+  notes               String?
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+1.4 Lender
+model Lender {
+  id          String   @id @default(cuid())
+  name        String
+  contactName String?
+  email       String?
+  phone       String?
+  portalUrl   String?
+  notes       String?
+
+  products    Product[]
+  applications Application[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+1.5 Product
+model Product {
+  id          String   @id @default(cuid())
+  lenderId    String
+  lender      Lender   @relation(fields: [lenderId], references: [id])
+
+  name        String
+  rateType    String?  // Fixed / Variable
+  termYears   Int?
+  interestRate Decimal? @db.Decimal(5,3)
+  minLtv      Decimal? @db.Decimal(5,2)
+  maxLtv      Decimal? @db.Decimal(5,2)
+  notes       String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+1.6 Document (Docs & Conditions)
+model Document {
+  id              String   @id @default(cuid())
+  applicationId   String
+  application     Application @relation(fields: [applicationId], references: [id])
+
+  type            String   // NOA, T4, Job Letter, Bank Statements, Purchase Agreement etc.
+  required        Boolean  @default(true)
+  received        Boolean  @default(false)
+  receivedDate    DateTime?
+  conditionGroup  String?  // e.g. Income, Down Payment, Property
+  conditionStatus String?  // Pending / Sent to lender / Satisfied
+  notes           String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+1.7 Task (linked to Client / Application)
+model Task {
+  id             String   @id @default(cuid())
+  title          String
+  description    String?
+  clientId       String?
+  client         Client?  @relation(fields: [clientId], references: [id])
+  applicationId  String?
+  application    Application? @relation(fields: [applicationId], references: [id])
+
+  dueDate        DateTime?
+  priority       String?  // Low / Medium / High
+  status         String   // Open / In Progress / Completed
+  createdForStage String? // optional: stage when task was created
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+1.8 Communication (notes / call log)
+model Communication {
+  id             String   @id @default(cuid())
+  clientId       String?
+  client         Client?  @relation(fields: [clientId], references: [id])
+  applicationId  String?
+  application    Application? @relation(fields: [applicationId], references: [id])
+
+  date           DateTime @default(now())
+  type           String   // Call / Email / SMS / Meeting
+  contactName    String?
+  summary        String
+  nextFollowUp   DateTime?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+1.9 Commission
+model Commission {
+  id               String   @id @default(cuid())
+  applicationId    String
+  application      Application @relation(fields: [applicationId], references: [id])
+
+  expectedAmount   Decimal? @db.Decimal(12,2)
+  actualAmount     Decimal? @db.Decimal(12,2)
+  brokerSplitPct   Decimal? @db.Decimal(5,2)
+  myShare          Decimal? @db.Decimal(12,2)
+  referralFee      Decimal? @db.Decimal(12,2)
+
+  expectedDate     DateTime?
+  receivedDate     DateTime?
+  reconciled       Boolean @default(false)
+
+  notes            String?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+
+Run DB migration.
+
+2. APPLICATIONS UI (PIPELINE)
+2.1 Applications List Page
+
+Update the Applications tab to show a table with:
+
+Client name (clickable)
+
+Property address (city, province)
+
+Deal type
+
+Stage (using the new pipeline)
+
+Lender & Product
+
+Mortgage amount
+
+Closing date
+
+Last updated
+
+Features:
+
+Filters:
+
+By Stage (Lead / App Taken/Background / Submitted / Approval / Funded / Declined)
+
+By Lender
+
+By deal type
+
+Search: by client name, property address, lender.
+
+Sorting: by closing date, created date, mortgage amount.
+
+2.2 New / Edit Application Form
+
+Form fields (grouped sections):
+
+Client & Basics
+
+Client (select from existing, with search)
+
+Deal type
+
+Purpose / occupancy
+
+Property
+
+Address, city, province, postal code
+
+Property type, occupancy
+
+Mortgage Details
+
+Purchase price, down payment, mortgage amount
+
+Amortization (years), term (years)
+
+Rate type, interest rate
+
+Lender & Product
+
+Lender (select from Lenders table)
+
+Product (filtered by lender)
+
+Key Dates
+
+Application date
+
+Submission date
+
+Approval date
+
+Closing date
+
+Funded date
+
+Stage
+
+Dropdown with options exactly:
+
+Lead
+
+App Taken/Background
+
+Submitted
+
+Approval
+
+Funded
+
+Declined
+
+Qualification Summary
+
+Inputs for GDS, TDS, max qualification, summary text.
+
+Form behaviour:
+
+Validate required fields (client, stage, at least a short description).
+
+On save → create/update record and return to Applications list.
+
+Keep UI consistent with existing styling (cards, modals, etc.).
+
+2.3 Application Detail Page
+
+When clicking an application, open a full Application Detail view with tabs:
+
+Summary
+
+All key fields (client, property, lender, product, stage, dates, amounts)
+
+Buttons: Change Stage, Add Task, Add Note
+
+Documents & Conditions
+
+Table of Document records:
+
+Type, Required?, Received?, Received date, Condition group, Condition status, Notes.
+
+Button: “Add document”
+
+Quick toggles for marking “received” and changing condition status.
+
+Tasks
+
+All tasks linked to this application.
+
+Ability to add/edit/complete tasks in-place.
+
+Notes / Communication
+
+Timeline list of Communication entries with date, type, summary.
+
+Add-new form (date, type, summary, next follow-up).
+
+Commissions
+
+Fields from Commission model.
+
+Show total expected vs received and whether reconciled.
+
+3. LENDERS & PRODUCTS PAGES
+
+Add two new sidebar items under Applications: Lenders, Products (or place them under Settings if you prefer).
+
+3.1 Lenders
+
+List of lenders with name, contact, phone/email, notes.
+
+Add/Edit forms.
+
+Clicking a lender shows its products and linked applications.
+
+3.2 Products
+
+List of products with columns: Lender, Product name, rate type, term, interest rate, min/max LTV.
+
+Filter by lender.
+
+Add/Edit forms.
+
+These must integrate with the Application form’s Lender and Product selects.
+
+4. TASKS PAGE (GLOBAL)
+
+Update the Tasks tab:
+
+Columns: Title, Client, Application, Due date, Priority, Status.
+
+Filters:
+
+By Status (Open / In Progress / Completed)
+
+By due date range
+
+By stage (tasks created for an application at certain stage)
+
+Quick actions to complete tasks.
+
+Allow creating a task from:
+
+Global Tasks page
+
+Client page
+
+Application detail page
+
+5. CLIENT PAGE IMPROVEMENTS
+
+On each Client detail page:
+
+Top card: basic info + notes.
+
+Tabs:
+
+Applications – list all linked applications with stage and closing date.
+
+Bank Accounts – list bank accounts for this client.
+
+Tasks – tasks linked to client.
+
+Notes / Communication – all communication linked to this client.
+
+6. DASHBOARD UPDATES
+
+Keep the existing layout but connect it to real data.
+
+Add/ensure:
+
+Cards:
+
+Leads (applications in stage = Lead)
+
+App Taken/Background
+
+Submitted
+
+Approval
+
+Funded
+
+Declined (optional tile or small stat)
+
+“Funded This Month” = sum of funded mortgage amounts where fundedDate is in current month.
+
+“Upcoming Closings (Next 14 Days)” = table of applications with closingDate in next 14 days, status not Declined.
+
+“Overdue Tasks” = tasks where status != Completed and dueDate < today.
+
+Optional extra section: Renewals
+
+Show funded applications with renewalDate in the next 6–12 months (based on closingDate + termYears).
+
+Columns: client, lender, mortgage amount, renewal date, notes.
+
+7. GENERAL UX + STYLE
+
+Use existing sidebar and card layout; match spacing, typography, and colors.
+
+Use shadcn/ui or the current component library for:
+
+Table, Tabs, Forms, Modals, Selects, Date pickers, Badges.
+
+Ensure all pages are responsive.

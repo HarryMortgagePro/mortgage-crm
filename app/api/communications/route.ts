@@ -9,29 +9,30 @@ export async function GET(request: NextRequest) {
   }
 
   const { searchParams } = new URL(request.url);
+  const clientId = searchParams.get('clientId') || '';
   const applicationId = searchParams.get('applicationId') || '';
-  const conditionGroup = searchParams.get('conditionGroup') || '';
-  const received = searchParams.get('received');
+  const type = searchParams.get('type') || '';
 
-  const documents = await prisma.document.findMany({
+  const communications = await prisma.communication.findMany({
     where: {
       AND: [
+        clientId ? { clientId } : {},
         applicationId ? { applicationId } : {},
-        conditionGroup ? { conditionGroup } : {},
-        received !== null ? { received: received === 'true' } : {},
+        type ? { type } : {},
       ],
     },
     include: {
+      client: true,
       application: {
         include: {
           client: true,
         },
       },
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { date: 'desc' },
   });
 
-  return NextResponse.json(documents);
+  return NextResponse.json(communications);
 }
 
 export async function POST(request: NextRequest) {
@@ -42,18 +43,15 @@ export async function POST(request: NextRequest) {
 
   try {
     const data = await request.json();
-    const document = await prisma.document.create({
+    const communication = await prisma.communication.create({
       data,
       include: {
-        application: {
-          include: {
-            client: true,
-          },
-        },
+        client: true,
+        application: true,
       },
     });
-    return NextResponse.json(document, { status: 201 });
+    return NextResponse.json(communication, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to create document' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to create communication' }, { status: 500 });
   }
 }

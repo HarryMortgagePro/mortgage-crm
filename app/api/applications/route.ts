@@ -8,9 +8,42 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const stage = searchParams.get('stage') || '';
+  const lenderId = searchParams.get('lenderId') || '';
+  const dealType = searchParams.get('dealType') || '';
+  const search = searchParams.get('search') || '';
+  const sortByParam = searchParams.get('sortBy') || 'createdAt';
+  const sortOrderParam = searchParams.get('sortOrder') || 'desc';
+
+  // Validate sortBy to prevent injection
+  const allowedSortFields = ['createdAt', 'closingDate', 'mortgageAmount', 'stage', 'applicationDate'];
+  const sortBy = allowedSortFields.includes(sortByParam) ? sortByParam : 'createdAt';
+  const sortOrder = (sortOrderParam === 'asc' || sortOrderParam === 'desc') ? sortOrderParam : 'desc';
+
   const applications = await prisma.application.findMany({
-    include: { client: true },
-    orderBy: { createdAt: 'desc' },
+    where: {
+      AND: [
+        stage ? { stage } : {},
+        lenderId ? { lenderId } : {},
+        dealType ? { dealType } : {},
+        search ? {
+          OR: [
+            { client: { firstName: { contains: search, mode: 'insensitive' } } },
+            { client: { lastName: { contains: search, mode: 'insensitive' } } },
+            { propertyAddress: { contains: search, mode: 'insensitive' } },
+            { propertyCity: { contains: search, mode: 'insensitive' } },
+            { lender: { name: { contains: search, mode: 'insensitive' } } },
+          ],
+        } : {},
+      ],
+    },
+    include: {
+      client: true,
+      lender: true,
+      product: true,
+    },
+    orderBy: { [sortBy]: sortOrder },
   });
 
   return NextResponse.json(applications);
@@ -24,18 +57,29 @@ export async function POST(request: NextRequest) {
 
   try {
     const data = await request.json();
-    const application = await prisma.application.create({
-      data: {
-        ...data,
-        applicationDate: data.applicationDate ? new Date(data.applicationDate) : null,
-        conditionsDueDate: data.conditionsDueDate ? new Date(data.conditionsDueDate) : null,
-        closingDate: data.closingDate ? new Date(data.closingDate) : null,
-        fundedDate: data.fundedDate ? new Date(data.fundedDate) : null,
-      },
-      include: { client: true },
+    
+    // Convert date strings to Date objects
+    const dateFields = ['applicationDate', 'submissionDate', 'approvalDate', 'closingDate', 'fundedDate', 'renewalDate'];
+    const processedData = { ...data };
+    
+    dateFields.forEach(field => {
+      if (processedData[field]) {
+        processedData[field] = new Date(processedData[field]);
+      }
     });
+
+    const application = await prisma.application.create({
+      data: processedData,
+      include: {
+        client: true,
+        lender: true,
+        product: true,
+      },
+    });
+    
     return NextResponse.json(application, { status: 201 });
   } catch (error) {
+    console.error('Failed to create application:', error);
     return NextResponse.json({ error: 'Failed to create application' }, { status: 500 });
   }
 }

@@ -11,108 +11,204 @@ datasource db {
 }
 
 model Client {
-  id             Int              @id @default(autoincrement())
+  id             String          @id @default(cuid())
   firstName      String
   lastName       String
   email          String?
   phone          String?
-  tags           String?
-  referralSource String?
+  type           String?         // Individual / Corporation
+  primaryContact String?         // if corporation
+  tags           String?         // for filtering/categorization
+  referralSource String?         // how they found us
   notes          String?
+
   applications   Application[]
-  tasks          Task[]
   bankAccounts   BankAccount[]
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  tasks          Task[]
+  communications Communication[]
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 }
 
 model Application {
-  id                 Int              @id @default(autoincrement())
-  client             Client           @relation(fields: [clientId], references: [id])
-  clientId           Int
+  id               String   @id @default(cuid())
+  clientId         String
+  client           Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
-  applicationType    String
-  purpose            String
-  status             String
+  stage            String   // Lead, App Taken/Background, Submitted, Approval, Funded, Declined
 
-  propertyAddress    String?
-  propertyCity       String?
-  propertyProvince   String?
-  propertyType       String?
+  dealType         String?  // Purchase / Refinance / Switch / HELOC / Private / Commercial
+  purpose          String?  // Owner-occupied / Rental / Second home, etc.
 
-  purchasePrice      Float?
-  mortgageAmount     Float?
-  downPaymentAmount  Float?
-  interestRate       Float?
-  rateType           String?
-  termYears          Int?
-  amortizationYears  Int?
+  propertyAddress  String?
+  propertyCity     String?
+  propertyProvince String?
+  propertyPostal   String?
+  propertyType     String?  // Condo / House / Duplex / Multi-Unit / Commercial
+  occupancy        String?  // Owner / Rental / Second Home
 
-  lenderName         String?
-  brokerFee          Float?
-  lenderFee          Float?
+  purchasePrice    Float?
+  mortgageAmount   Float?
+  downPayment      Float?
+  amortizationYears Int?
+  termYears        Int?
+  rateType         String?  // Fixed / Variable
+  interestRate     Float?
 
-  applicationDate    DateTime?
-  conditionsDueDate  DateTime?
-  closingDate        DateTime?
-  fundedDate         DateTime?
+  lenderId        String?
+  lender          Lender?   @relation(fields: [lenderId], references: [id], onDelete: SetNull)
+  productId       String?
+  product         Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
 
-  notes              String?
+  applicationDate DateTime?
+  submissionDate  DateTime?
+  approvalDate    DateTime?
+  closingDate     DateTime?
+  fundedDate      DateTime?
+  renewalDate     DateTime? // usually closingDate + termYears
 
-  tasks              Task[]
-  documents          DocumentRecord[]
+  maxQualification     Float?
+  gdsRatio             Float?
+  tdsRatio             Float?
+  qualificationSummary String?
 
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
-}
+  notes            String?
 
-model Task {
-  id             Int         @id @default(autoincrement())
-  title          String
-  description    String?
-  dueDate        DateTime?
-  status         String
-  priority       String?
-  category       String?
+  documents       Document[]
+  tasks           Task[]
+  communications  Communication[]
+  commissions     Commission[]
 
-  client         Client?     @relation(fields: [clientId], references: [id])
-  clientId       Int?
-
-  application    Application? @relation(fields: [applicationId], references: [id])
-  applicationId  Int?
-
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-}
-
-model DocumentRecord {
-  id             Int         @id @default(autoincrement())
-  application    Application @relation(fields: [applicationId], references: [id])
-  applicationId  Int
-  docType        String
-  status         String
-  notes          String?
-
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model BankAccount {
-  id                  Int      @id @default(autoincrement())
-  client              Client   @relation(fields: [clientId], references: [id])
-  clientId            Int
+  id                  String   @id @default(cuid())
+  clientId            String
+  client              Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
   bankName            String
   accountNickname     String?
   maskedAccountNumber String
-  accountType         String
+  accountType         String   // Chequing / Savings / Business / Joint / Other
   ownerName           String
   mainUser            String?
   usedFor             String?
   openedDate          DateTime?
-  status              String
-  currency            String?
+  status              String   // Active / Closed / Frozen
+  currency            String?  // CAD default
   notes               String?
 
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+}
+
+model Lender {
+  id          String   @id @default(cuid())
+  name        String
+  contactName String?
+  email       String?
+  phone       String?
+  portalUrl   String?
+  notes       String?
+
+  products    Product[]
+  applications Application[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  lenderId    String
+  lender      Lender   @relation(fields: [lenderId], references: [id], onDelete: Cascade)
+
+  name        String
+  rateType    String?  // Fixed / Variable
+  termYears   Int?
+  interestRate Float?
+  minLtv      Float?
+  maxLtv      Float?
+  notes       String?
+
+  applications Application[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Document {
+  id              String   @id @default(cuid())
+  applicationId   String
+  application     Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  type            String   // NOA, T4, Job Letter, Bank Statements, Purchase Agreement etc.
+  required        Boolean  @default(true)
+  received        Boolean  @default(false)
+  receivedDate    DateTime?
+  conditionGroup  String?  // e.g. Income, Down Payment, Property
+  conditionStatus String?  // Pending / Sent to lender / Satisfied
+  notes           String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Task {
+  id             String   @id @default(cuid())
+  title          String
+  description    String?
+  clientId       String?
+  client         Client?  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  applicationId  String?
+  application    Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  dueDate        DateTime?
+  priority       String?  // Low / Medium / High
+  status         String   // Open / In Progress / Completed
+  createdForStage String? // optional: stage when task was created
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Communication {
+  id             String   @id @default(cuid())
+  clientId       String?
+  client         Client?  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  applicationId  String?
+  application    Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  date           DateTime @default(now())
+  type           String   // Call / Email / SMS / Meeting
+  contactName    String?
+  summary        String
+  nextFollowUp   DateTime?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Commission {
+  id               String   @id @default(cuid())
+  applicationId    String
+  application      Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  expectedAmount   Float?
+  actualAmount     Float?
+  brokerSplitPct   Float?
+  myShare          Float?
+  referralFee      Float?
+
+  expectedDate     DateTime?
+  receivedDate     DateTime?
+  reconciled       Boolean @default(false)
+
+  notes            String?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }

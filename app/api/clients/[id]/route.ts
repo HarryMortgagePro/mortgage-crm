@@ -10,10 +10,22 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
   try {
     const client = await prisma.client.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: params.id },
       include: {
         applications: {
+          include: {
+            lender: true,
+          },
           orderBy: { createdAt: 'desc' },
+        },
+        bankAccounts: {
+          orderBy: { createdAt: 'desc' },
+        },
+        tasks: {
+          orderBy: { dueDate: 'asc' },
+        },
+        communications: {
+          orderBy: { date: 'desc' },
         },
       },
     });
@@ -37,7 +49,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   try {
     const data = await request.json();
     const client = await prisma.client.update({
-      where: { id: parseInt(params.id) },
+      where: { id: params.id },
       data,
     });
     return NextResponse.json(client);
@@ -53,28 +65,9 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   }
 
   try {
-    const clientId = parseInt(params.id);
-    
-    await prisma.$transaction(async (tx) => {
-      await tx.documentRecord.deleteMany({
-        where: {
-          application: {
-            clientId: clientId,
-          },
-        },
-      });
-      
-      await tx.task.deleteMany({
-        where: { clientId: clientId },
-      });
-      
-      await tx.application.deleteMany({
-        where: { clientId: clientId },
-      });
-      
-      await tx.client.delete({
-        where: { id: clientId },
-      });
+    // Cascade delete is handled by Prisma schema (onDelete: Cascade)
+    await prisma.client.delete({
+      where: { id: params.id },
     });
     
     return NextResponse.json({ success: true });

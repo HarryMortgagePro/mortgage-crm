@@ -10,28 +10,27 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const applicationId = searchParams.get('applicationId') || '';
-  const conditionGroup = searchParams.get('conditionGroup') || '';
-  const received = searchParams.get('received');
+  const reconciled = searchParams.get('reconciled');
 
-  const documents = await prisma.document.findMany({
+  const commissions = await prisma.commission.findMany({
     where: {
       AND: [
         applicationId ? { applicationId } : {},
-        conditionGroup ? { conditionGroup } : {},
-        received !== null ? { received: received === 'true' } : {},
+        reconciled !== null ? { reconciled: reconciled === 'true' } : {},
       ],
     },
     include: {
       application: {
         include: {
           client: true,
+          lender: true,
         },
       },
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { expectedDate: 'desc' },
   });
 
-  return NextResponse.json(documents);
+  return NextResponse.json(commissions);
 }
 
 export async function POST(request: NextRequest) {
@@ -42,7 +41,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const data = await request.json();
-    const document = await prisma.document.create({
+    const commission = await prisma.commission.create({
       data,
       include: {
         application: {
@@ -52,8 +51,8 @@ export async function POST(request: NextRequest) {
         },
       },
     });
-    return NextResponse.json(document, { status: 201 });
+    return NextResponse.json(commission, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to create document' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to create commission' }, { status: 500 });
   }
 }

@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   const session = await getSession();
   if (!session.isAuthenticated) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -10,16 +13,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
   try {
     const data = await request.json();
-    const task = await prisma.task.update({
+    const commission = await prisma.commission.update({
       where: { id: params.id },
-      data: {
-        ...data,
-        dueDate: data.dueDate ? new Date(data.dueDate) : null,
-        clientId: data.clientId || null,
-        applicationId: data.applicationId || null,
-      },
+      data,
       include: {
-        client: true,
         application: {
           include: {
             client: true,
@@ -27,25 +24,27 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         },
       },
     });
-    return NextResponse.json(task);
+    return NextResponse.json(commission);
   } catch (error) {
-    console.error('Failed to update task:', error);
-    return NextResponse.json({ error: 'Failed to update task' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to update commission' }, { status: 500 });
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   const session = await getSession();
   if (!session.isAuthenticated) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
-    await prisma.task.delete({
+    await prisma.commission.delete({
       where: { id: params.id },
     });
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to delete task' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to delete commission' }, { status: 500 });
   }
 }

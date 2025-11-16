@@ -13,6 +13,8 @@ export default function Sidebar() {
     { name: 'Dashboard', href: '/', icon: '📊' },
     { name: 'Clients', href: '/clients', icon: '👥' },
     { name: 'Applications', href: '/applications', icon: '📄' },
+    { name: 'Lenders', href: '/lenders', icon: '🏛️' },
+    { name: 'Products', href: '/products', icon: '📦' },
     { name: 'Accounts', href: '/accounts', icon: '🏦' },
     { name: 'Tasks', href: '/tasks', icon: '✓' },
     { name: 'Settings', href: '/settings', icon: '⚙️' },

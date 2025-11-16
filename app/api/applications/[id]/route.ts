@@ -10,11 +10,23 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
   try {
     const application = await prisma.application.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: params.id },
       include: {
         client: true,
-        tasks: true,
-        documents: true,
+        lender: true,
+        product: true,
+        tasks: {
+          orderBy: { dueDate: 'asc' },
+        },
+        documents: {
+          orderBy: { createdAt: 'desc' },
+        },
+        communications: {
+          orderBy: { date: 'desc' },
+        },
+        commissions: {
+          orderBy: { expectedDate: 'desc' },
+        },
       },
     });
 
@@ -36,19 +48,32 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
   try {
     const data = await request.json();
+    
+    // Convert date strings to Date objects
+    const dateFields = ['applicationDate', 'submissionDate', 'approvalDate', 'closingDate', 'fundedDate', 'renewalDate'];
+    const processedData = { ...data };
+    
+    dateFields.forEach(field => {
+      if (processedData[field]) {
+        processedData[field] = new Date(processedData[field]);
+      } else if (processedData[field] === null) {
+        // Keep explicit nulls
+        processedData[field] = null;
+      }
+    });
+
     const application = await prisma.application.update({
-      where: { id: parseInt(params.id) },
-      data: {
-        ...data,
-        applicationDate: data.applicationDate ? new Date(data.applicationDate) : null,
-        conditionsDueDate: data.conditionsDueDate ? new Date(data.conditionsDueDate) : null,
-        closingDate: data.closingDate ? new Date(data.closingDate) : null,
-        fundedDate: data.fundedDate ? new Date(data.fundedDate) : null,
+      where: { id: params.id },
+      data: processedData,
+      include: {
+        client: true,
+        lender: true,
+        product: true,
       },
-      include: { client: true },
     });
     return NextResponse.json(application);
   } catch (error) {
+    console.error('Failed to update application:', error);
     return NextResponse.json({ error: 'Failed to update application' }, { status: 500 });
   }
 }
@@ -60,20 +85,9 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   }
 
   try {
-    const appId = parseInt(params.id);
-    
-    await prisma.$transaction(async (tx) => {
-      await tx.documentRecord.deleteMany({
-        where: { applicationId: appId },
-      });
-      
-      await tx.task.deleteMany({
-        where: { applicationId: appId },
-      });
-      
-      await tx.application.delete({
-        where: { id: appId },
-      });
+    // Cascade delete is handled by Prisma schema (onDelete: Cascade)
+    await prisma.application.delete({
+      where: { id: params.id },
     });
     
     return NextResponse.json({ success: true });
