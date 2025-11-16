@@ -165,7 +165,14 @@ model Task {
   dueDate        DateTime?
   priority       String?  // Low / Medium / High
   status         String   // Open / In Progress / Completed
+  category       String?
   createdForStage String? // optional: stage when task was created
+
+  // Recurring task fields
+  isRecurring         Boolean  @default(false)
+  recurrenceType      String?  // None, Daily, Weekly, Monthly, Yearly
+  recurrenceInterval  Int?     // every X days/weeks/months (e.g., 2 = every 2 weeks)
+  recurrenceEndDate   DateTime?
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
