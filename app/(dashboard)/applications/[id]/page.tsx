@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { DOCUMENT_TYPES, DOCUMENT_STATUSES } from '@/lib/constants';
-import QualificationCalculator from '@/components/QualificationCalculator';
 
 type Application = {
   id: string;
@@ -114,7 +113,6 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
     { id: 'overview', name: 'Overview' },
     { id: 'tasks', name: 'Tasks' },
     { id: 'documents', name: 'Documents' },
-    { id: 'qualification', name: 'Qualification (GDS/TDS)' },
   ];
 
   const getBadgeColor = (value: number | null, max: number) => {
@@ -446,16 +444,6 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
           <p className="text-gray-500">No documents found.</p>
         )}
         </div>
-      )}
-
-      {activeTab === 'qualification' && (
-        <QualificationCalculator
-          applicationId={params.id}
-          mortgageAmount={application.mortgageAmount}
-          interestRate={application.interestRate}
-          amortizationYears={application.amortizationYears}
-          onQualificationSaved={fetchApplication}
-        />
       )}
     </div>
   );

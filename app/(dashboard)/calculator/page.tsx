@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { calculateGDS, calculateTDS, calculateMortgagePayment } from '@/lib/qualification';
+import { calculateMortgagePayment } from '@/lib/qualification';
 
 type Application = {
   id: string;
@@ -66,9 +66,17 @@ export default function CalculatorPage() {
   }, []);
 
   const fetchApplications = async () => {
-    const res = await fetch('/api/applications', { credentials: 'include' });
-    const data = await res.json();
-    if (Array.isArray(data)) setApplications(data);
+    try {
+      const res = await fetch('/api/applications', { credentials: 'include' });
+      if (!res.ok) {
+        console.error('Failed to fetch applications');
+        return;
+      }
+      const data = await res.json();
+      if (Array.isArray(data)) setApplications(data);
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+    }
   };
 
   const handleApplicationSelect = (appId: string) => {
@@ -122,11 +130,18 @@ export default function CalculatorPage() {
 
   const handleCalculate = () => {
     const grossIncome = applicantIncome + coApplicantIncome + rentalIncome + otherIncome;
-    const propertyExpenses = mortgagePayment + (propertyTax / 12) + heating + (condoFees * 0.5) + otherExpenses;
+    const propertyTaxMonthly = propertyTax / 12;
+    const condoAdjusted = condoFees * 0.5; // 50% of condo fees per industry standard
+    const propertyExpenses = mortgagePayment + propertyTaxMonthly + heating + condoAdjusted + otherExpenses;
     const totalDebts = creditCards + loans + lineOfCredit + otherDebts;
 
-    const gds = calculateGDS(propertyExpenses, grossIncome);
-    const tds = calculateTDS(propertyExpenses, totalDebts, grossIncome);
+    if (!grossIncome || grossIncome <= 0) {
+      alert('Please enter income information');
+      return;
+    }
+
+    const gds = (propertyExpenses / grossIncome) * 100;
+    const tds = ((propertyExpenses + totalDebts) / grossIncome) * 100;
     const qualifies = gds <= maxGds && tds <= maxTds;
 
     setResults({
@@ -145,6 +160,11 @@ export default function CalculatorPage() {
       return;
     }
 
+    if (!results) {
+      alert('Please calculate GDS/TDS first before saving');
+      return;
+    }
+
     setLoading(true);
     try {
       const payload = {
@@ -156,22 +176,27 @@ export default function CalculatorPage() {
         propertyTaxAnnual: propertyTax,
         heatingMonthly: heating,
         condoFeesMonthly: condoFees,
-        otherPropertyExpensesMonthly: otherExpenses,
+        otherPropertyCostsMonthly: otherExpenses,
         creditCardsMonthly: creditCards,
         loansMonthly: loans,
-        lineOfCreditMonthly: lineOfCredit,
+        linesOfCreditMonthly: lineOfCredit,
         otherDebtsMonthly: otherDebts,
-        maxGds,
-        maxTds,
+        maxGdsAllowed: maxGds,
+        maxTdsAllowed: maxTds,
       };
 
       // Check if qualification exists
       const existingRes = await fetch(`/api/applications/${selectedAppId}/qualification`, {
         credentials: 'include',
       });
+      
+      if (!existingRes.ok) {
+        throw new Error('Failed to check existing qualification');
+      }
+      
       const existing = await existingRes.json();
 
-      const method = existing.id ? 'PUT' : 'POST';
+      const method = existing?.id ? 'PUT' : 'POST';
       const res = await fetch(`/api/applications/${selectedAppId}/qualification`, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -180,13 +205,16 @@ export default function CalculatorPage() {
       });
 
       if (res.ok) {
-        alert('Qualification saved successfully!');
+        alert('Qualification saved successfully! The application has been updated with GDS/TDS results.');
+        // Refetch applications to show updated values
+        await fetchApplications();
       } else {
-        alert('Failed to save qualification');
+        const errorData = await res.json();
+        alert(`Failed to save qualification: ${errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error saving qualification:', error);
-      alert('Error saving qualification');
+      alert('Error saving qualification. Please try again.');
     } finally {
       setLoading(false);
     }
