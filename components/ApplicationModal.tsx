@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { STATUSES } from '@/lib/constants';
 
 type Client = {
   id: number;
@@ -176,12 +177,9 @@ export default function ApplicationModal({ application, onClose, onSave }: Appli
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
               >
-                <option>Lead</option>
-                <option>Pre-Approval</option>
-                <option>Submitted</option>
-                <option>Conditional Approval</option>
-                <option>Clear to Close</option>
-                <option>Funded</option>
+                {STATUSES.map((status) => (
+                  <option key={status} value={status}>{status}</option>
+                ))}
               </select>
             </div>
 
