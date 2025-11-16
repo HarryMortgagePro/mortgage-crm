@@ -30,6 +30,7 @@ interface QualificationCalculatorProps {
   mortgageAmount?: number | null;
   interestRate?: number | null;
   amortizationYears?: number | null;
+  onQualificationSaved?: () => void;
 }
 
 export default function QualificationCalculator({
@@ -37,6 +38,7 @@ export default function QualificationCalculator({
   mortgageAmount,
   interestRate,
   amortizationYears,
+  onQualificationSaved,
 }: QualificationCalculatorProps) {
   const [qualification, setQualification] = useState<QualificationData>({
     applicantIncomeMonthly: 0,
@@ -189,6 +191,9 @@ export default function QualificationCalculator({
         const data = await res.json();
         setQualification(prev => ({ ...prev, id: data.id }));
         fetchQualification();
+        if (onQualificationSaved) {
+          onQualificationSaved();
+        }
         alert('Qualification saved successfully!');
       } else {
         alert('Failed to save qualification');

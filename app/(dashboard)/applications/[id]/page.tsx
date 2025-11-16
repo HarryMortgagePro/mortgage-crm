@@ -454,6 +454,7 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
           mortgageAmount={application.mortgageAmount}
           interestRate={application.interestRate}
           amortizationYears={application.amortizationYears}
+          onQualificationSaved={fetchApplication}
         />
       )}
     </div>

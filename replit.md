@@ -16,6 +16,25 @@ This is a full-stack mortgage and loan CRM (Customer Relationship Management) ap
 ## Recent Changes
 
 - **2025-11-16**:
+  - **Added GDS/TDS Qualification Calculator** (similar to Filogix):
+    - New Qualification model to store detailed income, expenses, and debt data per application
+    - Comprehensive calculation logic for GDS (Gross Debt Service) and TDS (Total Debt Service) ratios
+    - GDS formula: (Property Expenses) / Gross Monthly Income × 100
+    - TDS formula: (Property Expenses + Other Debts) / Gross Monthly Income × 100
+    - Condo fees: 50% used in calculation (industry standard)
+    - Default limits: GDS 39%, TDS 44% (customizable per application)
+    - New "Qualification (GDS/TDS)" tab on Application detail page with:
+      - Income inputs (applicant, co-applicant, rental, other)
+      - Property expense inputs (mortgage payment, property tax, heating, condo fees, other)
+      - Other debt inputs (credit cards, loans, lines of credit, other)
+      - Customizable max GDS/TDS limits
+      - Real-time calculation with color-coded badges (green ≤ max, yellow within +2%, red > limit)
+      - Auto-prefill mortgage payment based on application data
+      - Results showing gross income, property expenses, other debts, GDS %, TDS %, and qualification status
+    - Qualification results automatically sync to Application model (gdsRatio, tdsRatio, qualificationSummary)
+    - GDS/TDS ratios displayed in Application overview with color-coded badges
+    - API route `/api/applications/[id]/qualification` for full CRUD operations
+
   - **Removed Lenders and Products Features**:
     - Removed Lender and Product models from database schema
     - Removed lenderId and productId foreign keys from Application model
@@ -88,14 +107,21 @@ All models now use String IDs (cuid) instead of autoincrement Int for better sca
    - Property details: address, city, province, postal code, purchase price, down payment
    - Mortgage details: amount, term years, rate type, interest rate, lender name (text field)
    - Deal type: Purchase, Refinance, Renewal, Switch
-   - Qualification fields: GDS ratio, TDS ratio, max qualification amount
+   - Qualification fields: GDS ratio, TDS ratio, qualification summary
    - Important dates: application, submission, approval, closing, renewal
-   - Relations: client (required), documents, tasks, communications, commissions
-3. **Document**: Application document tracking (name, category, required, received, receivedDate, conditionGroup, conditionStatus)
-4. **Communication**: Client communication log (type, direction, subject, notes, communicationDate)
-5. **Commission**: Commission tracking per application (type, amount, percentage, expectedDate, receivedDate, reconciled status)
-6. **Task**: Task management (title, description, status, priority, category, dueDate, createdForStage, recurring task support)
-7. **BankAccount**: Client bank account information (bank name, account nickname, masked account number, usage, opened date, status, notes) - all fields optional except clientId
+   - Relations: client (required), documents, tasks, communications, commissions, qualification
+3. **Qualification**: Detailed GDS/TDS qualification data per application with:
+   - Income fields: applicant, co-applicant, rental, other (monthly)
+   - Property expense fields: mortgage payment, property tax (annual), heating, condo fees, other (monthly)
+   - Debt fields: credit cards, loans, lines of credit, other (monthly)
+   - Limits: max GDS/TDS allowed (defaults: 39%, 44%)
+   - Calculated results: GDS %, TDS %, qualification status (pass/fail)
+   - One-to-one relationship with Application
+4. **Document**: Application document tracking (name, category, required, received, receivedDate, conditionGroup, conditionStatus)
+5. **Communication**: Client communication log (type, direction, subject, notes, communicationDate)
+6. **Commission**: Commission tracking per application (type, amount, percentage, expectedDate, receivedDate, reconciled status)
+7. **Task**: Task management (title, description, status, priority, category, dueDate, createdForStage, recurring task support)
+8. **BankAccount**: Client bank account information (bank name, account nickname, masked account number, usage, opened date, status, notes) - all fields optional except clientId
 
 ### Key Features
 
@@ -111,6 +137,16 @@ All models now use String IDs (cuid) instead of autoincrement Int for better sca
   - Filters: stage, deal type, search
   - Sorting: by createdAt, closingDate, mortgageAmount, stage, applicationDate
   - Lender information stored as text field
+  - Tab-based detail view: Overview, Tasks, Documents, Qualification
+- **Qualification (GDS/TDS Calculator)**:
+  - Comprehensive income tracking (applicant, co-applicant, rental, other income)
+  - Property expense calculation (mortgage, taxes, heating, condo fees)
+  - Debt obligation tracking (credit cards, loans, lines of credit)
+  - Automatic GDS/TDS ratio calculation with industry-standard formulas
+  - Color-coded qualification status (green = pass, yellow = marginal, red = fail)
+  - Customizable max GDS/TDS limits per application
+  - Results sync to Application model for dashboard visibility
+  - Auto-prefill mortgage payment from application data
 - **Documents**: Document tracking per application with condition groups and received status
 - **Communications**: Client communication log with type and date filtering
 - **Commissions**: Commission tracking with reconciled status
@@ -136,6 +172,7 @@ All models now use String IDs (cuid) instead of autoincrement Int for better sca
   - `(dashboard)/`: Protected dashboard routes (page.tsx = dashboard, clients, applications, tasks, accounts, settings)
   - `api/auth/`: Authentication API endpoints (login, logout, check)
   - `api/applications/`: Application CRUD with enhanced filtering and sorting
+    - `[id]/qualification/`: GDS/TDS qualification calculator API endpoints
   - `api/clients/`: Client CRUD with enhanced includes
   - `api/documents/`: Document CRUD API endpoints
   - `api/communications/`: Communication CRUD API endpoints
@@ -144,8 +181,8 @@ All models now use String IDs (cuid) instead of autoincrement Int for better sca
   - `api/accounts/`: Bank account CRUD API endpoints
   - `api/dashboard/`: Dashboard statistics and summaries
   - `login/`: Login page
-- `components/`: Reusable React components (AuthGuard, Sidebar, DashboardLayout, BankAccountModal)
-- `lib/`: Utility functions and configurations (Prisma client, session config, auth helpers)
+- `components/`: Reusable React components (AuthGuard, Sidebar, DashboardLayout, BankAccountModal, QualificationCalculator)
+- `lib/`: Utility functions and configurations (Prisma client, session config, auth helpers, qualification calculations)
 - `prisma/`: Database schema, migrations, and comprehensive seed script
 
 ## Environment Setup
