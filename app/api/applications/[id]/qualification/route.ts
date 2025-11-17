@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getIronSession } from 'iron-session';
 import { sessionOptions } from '@/lib/session';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { calculateQualification, generateQualificationSummary } from '@/lib/qualification';
 
 export async function GET(
