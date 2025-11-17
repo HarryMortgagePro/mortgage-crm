@@ -1,0 +1,99 @@
+18:59:05.527 Running build in Washington, D.C., USA (East) – iad1
+18:59:05.528 Build machine configuration: 2 cores, 8 GB
+18:59:05.663 Cloning github.com/HarryMortgagePro/mortgage-crm (Branch: main, Commit: 84da5eb)
+18:59:05.664 Previous build caches not available.
+18:59:05.913 Cloning completed: 250.000ms
+18:59:06.312 Running "vercel build"
+18:59:06.689 Vercel CLI 48.10.2
+18:59:07.299 Installing dependencies...
+18:59:09.638 npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+18:59:10.166 npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+18:59:11.258 npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+18:59:11.330 npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+18:59:11.448 npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+18:59:12.966 npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+18:59:20.918 
+18:59:20.918 added 435 packages in 13s
+18:59:20.919 
+18:59:20.919 157 packages are looking for funding
+18:59:20.919   run `npm fund` for details
+18:59:20.974 Running "npm run build"
+18:59:21.080 
+18:59:21.081 > mortgage-crm@0.1.0 build
+18:59:21.081 > prisma generate && next build
+18:59:21.081 
+18:59:21.528 Prisma schema loaded from prisma/schema.prisma
+18:59:22.089 
+18:59:22.089 ✔ Generated Prisma Client (v5.22.0) to ./node_modules/@prisma/client in 249ms
+18:59:22.089 
+18:59:22.089 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+18:59:22.089 
+18:59:22.089 Help us improve the Prisma ORM for everyone. Share your feedback in a short 2-min survey: https://pris.ly/orm/survey/release-5-22
+18:59:22.089 
+18:59:22.791 Attention: Next.js now collects completely anonymous telemetry regarding usage.
+18:59:22.792 This information is used to shape Next.js' roadmap and prioritize features.
+18:59:22.792 You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+18:59:22.793 https://nextjs.org/telemetry
+18:59:22.793 
+18:59:22.844   ▲ Next.js 14.2.33
+18:59:22.845 
+18:59:22.921    Creating an optimized production build ...
+18:59:28.800  ⚠ Compiled with warnings
+18:59:28.800 
+18:59:28.800 ./app/api/applications/[id]/qualification/route.ts
+18:59:28.800 Attempted import error: '@/lib/prisma' does not contain a default export (imported as 'prisma').
+18:59:28.801 
+18:59:28.801 Import trace for requested module:
+18:59:28.801 ./app/api/applications/[id]/qualification/route.ts
+18:59:28.801 
+18:59:28.801 ./app/api/applications/[id]/qualification/route.ts
+18:59:28.801 Attempted import error: '@/lib/prisma' does not contain a default export (imported as 'prisma').
+18:59:28.801 
+18:59:28.801 Import trace for requested module:
+18:59:28.801 ./app/api/applications/[id]/qualification/route.ts
+18:59:28.801 
+18:59:28.801 ./app/api/applications/[id]/qualification/route.ts
+18:59:28.802 Attempted import error: '@/lib/prisma' does not contain a default export (imported as 'prisma').
+18:59:28.802 
+18:59:28.802 Import trace for requested module:
+18:59:28.802 ./app/api/applications/[id]/qualification/route.ts
+18:59:28.802 
+18:59:28.802 ./app/api/applications/[id]/qualification/route.ts
+18:59:28.802 Attempted import error: '@/lib/prisma' does not contain a default export (imported as 'prisma').
+18:59:28.802 
+18:59:28.803 Import trace for requested module:
+18:59:28.803 ./app/api/applications/[id]/qualification/route.ts
+18:59:28.803 
+18:59:28.803 ./app/api/applications/[id]/qualification/route.ts
+18:59:28.803 Attempted import error: '@/lib/prisma' does not contain a default export (imported as 'prisma').
+18:59:28.803 
+18:59:28.803 Import trace for requested module:
+18:59:28.803 ./app/api/applications/[id]/qualification/route.ts
+18:59:28.803 
+18:59:36.277  ✓ Compiled successfully
+18:59:36.278    Linting and checking validity of types ...
+18:59:41.027 
+18:59:41.027 Failed to compile.
+18:59:41.035 
+18:59:41.035 ./app/(dashboard)/accounts/page.tsx
+18:59:41.035 42:6  Warning: React Hook useEffect has a missing dependency: 'fetchAccounts'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+18:59:41.035 
+18:59:41.035 ./app/(dashboard)/applications/[id]/page.tsx
+18:59:41.036 70:6  Warning: React Hook useEffect has a missing dependency: 'fetchApplication'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+18:59:41.036 
+18:59:41.036 ./app/(dashboard)/calculator/page.tsx
+18:59:41.036 400:58  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+18:59:41.036 400:71  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+18:59:41.036 
+18:59:41.036 ./app/(dashboard)/clients/[id]/page.tsx
+18:59:41.036 46:6  Warning: React Hook useEffect has a missing dependency: 'fetchClient'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+18:59:41.036 
+18:59:41.036 ./app/(dashboard)/clients/page.tsx
+18:59:41.036 45:6  Warning: React Hook useEffect has a missing dependency: 'fetchClients'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+18:59:41.036 
+18:59:41.036 ./components/QualificationCalculator.tsx
+18:59:41.036 74:6  Warning: React Hook useEffect has a missing dependency: 'fetchQualification'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+18:59:41.036 85:6  Warning: React Hook useEffect has a missing dependency: 'qualification.mortgagePaymentMonthly'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+18:59:41.036 
+18:59:41.039 info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
+18:59:41.060 Error: Command "npm run build" exited with 1

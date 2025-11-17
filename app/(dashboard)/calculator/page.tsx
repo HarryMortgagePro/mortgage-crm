@@ -397,7 +397,7 @@ export default function CalculatorPage() {
             </select>
           ) : (
             <p className="text-gray-500 text-sm">
-              No properties saved for this client. Click "Add Property" to create one.
+              No properties saved for this client. Click &quot;Add Property&quot; to create one.
             </p>
           )}
         </div>
