@@ -10,7 +10,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
   try {
     const account = await prisma.bankAccount.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: params.id },
       include: {
         client: true,
       },
@@ -36,7 +36,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const data = await request.json();
     
     const account = await prisma.bankAccount.update({
-      where: { id: parseInt(params.id) },
+      where: { id: params.id },
       data: {
         clientId: data.clientId,
         bankName: data.bankName,
@@ -71,7 +71,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 
   try {
     await prisma.bankAccount.delete({
-      where: { id: parseInt(params.id) },
+      where: { id: params.id },
     });
 
     return NextResponse.json({ success: true });
